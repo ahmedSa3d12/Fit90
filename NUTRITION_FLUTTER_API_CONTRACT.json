@@ -1,0 +1,352 @@
+{
+  "document": {
+    "name": "FIT90 Nutrition - Flutter API Contract",
+    "version": "1.0.0",
+    "language": "ar",
+    "generatedAt": "2026-08-20",
+    "purpose": "عقد تنفيذ حجز التغذية في تطبيق العميل Flutter."
+  },
+  "server": {
+    "productionBaseUrl": "https://fit90.metacodecx.com/api",
+    "contentType": "application/json",
+    "authentication": {
+      "type": "Bearer JWT",
+      "header": "Authorization: Bearer <accessToken>",
+      "login": {
+        "method": "POST",
+        "path": "/mobile/app/login",
+        "body": {
+          "phone": "string",
+          "password": "string"
+        },
+        "response": {
+          "accessToken": "string",
+          "tokenType": "Bearer",
+          "expiresIn": "2h"
+        }
+      }
+    }
+  },
+  "importantRules": [
+    "التغذية تستخدم مسارات /mobile/app/nutrition فقط؛ لا تستخدم /mobile/app/appointments للتغذية.",
+    "الأخصائي ينشر فترة حضور فقط. العميل يختار الخدمة داخل خطوات الحجز، لذلك مدة الموعد تتغير حسب الخدمة.",
+    "يُعرض للعميل فقط وقت البداية المتاح الذي يناسب مدة الخدمة المختارة؛ لا يُسمح بإرسال وقت حر غير موجود في times.",
+    "إذا لم يكن للعميل رصيد للخدمة، يسمح له النظام بالحجز ويكون coverageType=pay_at_branch وpaymentStatus=due_at_branch؛ الدفع عند الحضور.",
+    "إذا كان الرصيد متاحًا، يكون coverageType=subscription وpaymentStatus=not_required ويتم حجز/خصم الحصة حسب حالة الحجز.",
+    "الحالة booking_not_started تعني إظهار الموعد بدون زر حجز فعال. booking_available فقط تسمح بالاختيار والحجز.",
+    "بعد HTTP 409 عند إنشاء الحجز، أعيدي طلب schedule لأن عميلًا آخر قد يكون حجز الوقت للتو."
+  ],
+  "flutterFlow": [
+    {
+      "step": 1,
+      "screen": "NutritionServicesScreen",
+      "request": "GET /mobile/app/nutrition/services",
+      "action": "اعرضي الخدمات ومدتها وسعرها؛ العميل يختار خدمة واحدة."
+    },
+    {
+      "step": 2,
+      "screen": "NutritionProvidersScreen",
+      "request": "GET /mobile/app/nutrition/providers",
+      "action": "اعرضي أخصائيي التغذية الذين لديهم فترات حضور منشورة مستقبلية؛ العميل يختار أخصائيًا."
+    },
+    {
+      "step": 3,
+      "screen": "NutritionMonthlyCalendarScreen",
+      "request": "GET /mobile/app/nutrition/schedule?serviceId={serviceId}&trainerId={trainerId}&year={year}&month={month}",
+      "action": "اعرضي الأيام والفترات وحالة كل فترة. اختاري فقط يومًا فيه times متاحة."
+    },
+    {
+      "step": 4,
+      "screen": "NutritionTimesScreen",
+      "source": "schedule.days[].times",
+      "action": "اعرضي startTime-endTime. النهاية محسوبة من مدة الخدمة. خزني availabilitySlotId وstartTime للطلب النهائي."
+    },
+    {
+      "step": 5,
+      "screen": "NutritionBookingConfirmationSheet",
+      "request": "GET /mobile/app/nutrition/eligibility?serviceId={serviceId}&date={yyyy-MM-dd}",
+      "action": "إن كانت coverageType=subscription أظهري الحصص المتبقية. إن كانت pay_at_branch أظهري أن الدفع عند الحضور مع amountDue."
+    },
+    {
+      "step": 6,
+      "screen": "BookingSuccessScreen",
+      "request": "POST /mobile/app/nutrition/bookings",
+      "action": "اعرضي نجاح الحجز والتغطية والدفع. بعد النجاح أعيدي تحميل schedule وmy bookings."
+    }
+  ],
+  "endpoints": [
+    {
+      "id": "nutrition_services",
+      "method": "GET",
+      "path": "/mobile/app/nutrition/services",
+      "authRequired": true,
+      "responseExample": {
+        "data": [
+          {
+            "id": 10,
+            "name": "InBody",
+            "description": "قياس مكونات الجسم",
+            "durationMin": 30,
+            "price": "250.00",
+            "entitlementKey": "nutrition_session"
+          }
+        ]
+      }
+    },
+    {
+      "id": "nutrition_providers",
+      "method": "GET",
+      "path": "/mobile/app/nutrition/providers",
+      "authRequired": true,
+      "responseExample": {
+        "data": [
+          {
+            "id": 12,
+            "name": "Mona",
+            "specialization": "Nutrition",
+            "imageUrl": "/uploads/trainers/mona.jpg"
+          }
+        ]
+      }
+    },
+    {
+      "id": "nutrition_schedule",
+      "method": "GET",
+      "path": "/mobile/app/nutrition/schedule",
+      "authRequired": true,
+      "query": {
+        "serviceId": "int, required",
+        "trainerId": "int, required",
+        "year": "int 2000..2100, required",
+        "month": "int 1..12, required"
+      },
+      "responseExample": {
+        "plan": {
+          "id": 5,
+          "employeeId": 12,
+          "status": "published",
+          "year": 2026,
+          "month": 8,
+          "publishedAt": "2026-08-01T08:00:00.000Z"
+        },
+        "service": {
+          "id": 10,
+          "name": "InBody",
+          "durationMin": 30,
+          "price": "250.00",
+          "entitlementKey": "nutrition_session"
+        },
+        "trainerId": 12,
+        "year": 2026,
+        "month": 8,
+        "days": [
+          {
+            "date": "2026-08-27",
+            "windows": [
+              {
+                "availabilitySlotId": 11,
+                "startTime": "15:00",
+                "endTime": "20:00",
+                "bookingStartAt": "2026-08-26T09:00:00.000Z",
+                "bookingEndAt": "2026-08-27T12:00:00.000Z",
+                "bookingStatus": "booking_not_started"
+              }
+            ],
+            "times": []
+          }
+        ]
+      },
+      "bookingStatus": {
+        "booking_available": "الحجز متاح؛ يمكن استخدام times.",
+        "booking_not_started": "الحجز لم يبدأ؛ اعرضي وقت الفتح ولا تسمحي بالحجز.",
+        "booking_closed": "فترة الحجز انتهت؛ لا تسمحي بالحجز.",
+        "appointment_started": "وقت الموعد بدأ؛ لا تسمحي بالحجز."
+      },
+      "timeModel": {
+        "windowId": "معرّف فترة حضور الأخصائي؛ لا تعرضيها كموعد نهائي للعميل.",
+        "times": "قائمة المواعيد القابلة للحجز بعد حساب مدة الخدمة والحجوزات الحالية.",
+        "timeItemExample": {
+          "windowId": 11,
+          "availabilitySlotId": 11,
+          "monthlyAvailabilityId": 5,
+          "bookingStartAt": "2026-08-26T09:00:00.000Z",
+          "bookingEndAt": "2026-08-27T12:00:00.000Z",
+          "startTime": "15:30",
+          "endTime": "16:00"
+        }
+      }
+    },
+    {
+      "id": "nutrition_eligibility",
+      "method": "GET",
+      "path": "/mobile/app/nutrition/eligibility",
+      "authRequired": true,
+      "query": {
+        "serviceId": "int, required",
+        "date": "yyyy-MM-dd, required"
+      },
+      "responseExample": {
+        "total": 4,
+        "used": 1,
+        "reserved": 1,
+        "remaining": 2,
+        "coverageType": "subscription",
+        "paymentStatus": "not_required",
+        "amountDue": "0.00",
+        "sources": [
+          {
+            "subscriptionId": 22,
+            "subscriptionNumber": "SUB-22",
+            "subscriptionName": "Gold",
+            "startDate": "2026-08-01",
+            "endDate": "2026-08-31"
+          }
+        ]
+      },
+      "payAtBranchExample": {
+        "total": 0,
+        "used": 0,
+        "reserved": 0,
+        "remaining": 0,
+        "coverageType": "pay_at_branch",
+        "paymentStatus": "due_at_branch",
+        "amountDue": "250.00",
+        "sources": []
+      }
+    },
+    {
+      "id": "create_nutrition_booking",
+      "method": "POST",
+      "path": "/mobile/app/nutrition/bookings",
+      "authRequired": true,
+      "body": {
+        "availabilitySlotId": "int, required; from schedule.days[].times[].availabilitySlotId",
+        "serviceId": "int, required",
+        "startTime": "HH:mm or HH:mm:ss, required; from schedule.days[].times[].startTime",
+        "notes": "string, optional, maximum 1000 characters"
+      },
+      "bodyExample": {
+        "availabilitySlotId": 11,
+        "serviceId": 10,
+        "startTime": "15:30",
+        "notes": ""
+      },
+      "successResponseExample": {
+        "id": 140,
+        "bookingNumber": "BK-AB12CD34",
+        "memberId": 77,
+        "memberName": "Customer name",
+        "serviceId": 10,
+        "serviceName": "InBody",
+        "employeeId": 12,
+        "bookingDate": "2026-08-27",
+        "startTime": "15:30",
+        "endTime": "16:00",
+        "durationMin": 30,
+        "status": "confirmed",
+        "coverageType": "subscription",
+        "paymentStatus": "not_required",
+        "amountDue": "0.00",
+        "total": 4,
+        "used": 1,
+        "reserved": 2,
+        "remaining": 1
+      }
+    },
+    {
+      "id": "my_nutrition_bookings",
+      "method": "GET",
+      "path": "/mobile/app/nutrition/bookings/my",
+      "authRequired": true,
+      "query": {
+        "status": "optional: pending | confirmed | wait | completed | cancelled | no_show",
+        "scope": "optional: upcoming | past | all"
+      },
+      "responseExample": {
+        "data": [
+          {
+            "id": 140,
+            "bookingNumber": "BK-AB12CD34",
+            "status": "confirmed",
+            "durationMin": 30,
+            "price": "250.00",
+            "coverageType": "pay_at_branch",
+            "paymentStatus": "due_at_branch",
+            "entitlementRestoredAt": null,
+            "service": {
+              "id": 10,
+              "name": "InBody",
+              "category": "nutrition"
+            },
+            "trainer": {
+              "id": 12,
+              "name": "Mona",
+              "specialization": "Nutrition",
+              "imageUrl": null
+            },
+            "schedule": {
+              "id": 410,
+              "date": "2026-08-27",
+              "startTime": "15:30",
+              "endTime": "16:00"
+            },
+            "createdAt": "2026-08-20T10:00:00.000Z"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cancel_nutrition_booking",
+      "method": "PATCH",
+      "path": "/mobile/app/nutrition/bookings/{bookingId}/cancel",
+      "authRequired": true,
+      "successResponseExample": {
+        "id": 140,
+        "status": "cancelled",
+        "code": "BOOKING_CANCELLED",
+        "message": "تم إلغاء الحجز بنجاح.",
+        "promotedBookingId": null,
+        "service": {
+          "id": 10,
+          "name": "InBody",
+          "category": "nutrition"
+        }
+      },
+      "restriction": "الإلغاء متاح فقط للحالة pending أو confirmed أو wait، وقبل وقت الموعد وقبل انتهاء فترة الحجز."
+    }
+  ],
+  "uiRequirements": {
+    "calendar": [
+      "اعرضي الشهر من response.days، وليس كل أيام الشهر كأنها متاحة.",
+      "اعرضي حالة الفترة باستخدام bookingStatus.",
+      "مع booking_not_started: أظهري فتح الحجز بتوقيت القاهرة من bookingStartAt.",
+      "مع booking_closed أو appointment_started: اعرضي الحالة ولا تعرضي زر حجز.",
+      "مع booking_available: اعرضي قائمة times، ولا تعتمدي على وقت الفترة startTime/endTime للحجز النهائي."
+    ],
+    "confirmation": [
+      "اعرضي اسم الخدمة، الأخصائي، التاريخ، وقت البداية والنهاية، والمدة بالدقائق.",
+      "coverageType=subscription: اعرضي المتبقي remaining.",
+      "coverageType=pay_at_branch: اعرضي المبلغ amountDue وعبارة الدفع عند الحضور.",
+      "لا تطلبي دفعًا إلكترونيًا ضمن هذا التدفق."
+    ],
+    "myBookings": [
+      "اعرضي paymentStatus=due_at_branch كـ «الدفع عند الحضور».",
+      "بعد الإلغاء أعيدي تحميل قائمة حجوزاتي والتقويم.",
+      "اعرضي زر الإلغاء فقط للحالات pending وconfirmed وwait؛ وتعاملّي مع 409 برسالة الخادم."
+    ]
+  },
+  "errorHandling": {
+    "401": "التوكن غير صالح أو منتهٍ؛ أعيدي تسجيل الدخول.",
+    "403": "حساب العميل أو العضوية غير نشطة.",
+    "404": "الخدمة أو الأخصائي أو الجدول المنشور غير موجود.",
+    "400": "بيانات غير صالحة أو وقت سابق أو startTime غير موجود ضمن الأوقات المتاحة.",
+    "409": "فترة الحجز لم تبدأ أو انتهت أو الموعد أصبح محجوزًا أو تم إلغاؤه؛ أعيدي تحميل schedule.",
+    "500": "اعرضي رسالة عامة مع زر إعادة المحاولة، ولا تنشئي حجزًا محليًا قبل استجابة النجاح."
+  },
+  "doNotImplement": [
+    "لا تسمحي للعميل باختيار serviceId بعد إرسال الحجز أو تعديل الحجز بعد إنشائه.",
+    "لا تحجزي وقتًا اعتمادًا على الحساب المحلي لمدة الخدمة؛ استخدمي times التي يعيدها السيرفر.",
+    "لا تعتبري غياب العميل أو تأكيد حضوره من تطبيق العميل؛ هذه إجراءات الإدارة/الأخصائي.",
+    "لا تستخدمي مسار الإدارة /scheduling/bookings/nutrition من تطبيق العميل."
+  ]
+}

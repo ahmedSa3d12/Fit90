@@ -1,0 +1,1 @@
+import{i as n,y as t}from"./index-Bas_h_qQ.js";async function e(){try{const{data:a}=await t.get("/club/branch-options");if(Array.isArray(a))return a}catch{}const{data:r}=await t.get("/branches");return Array.isArray(r)?r:[]}function c(){return n({queryKey:["branches","options"],queryFn:e,retry:!1})}export{c as u};

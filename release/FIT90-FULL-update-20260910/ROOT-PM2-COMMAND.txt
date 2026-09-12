@@ -1,0 +1,17 @@
+# Run as root only, after deploy-cpanel.sh finishes successfully.
+# This updates PM2's startup script to the current Nest build entry point.
+export PATH=/opt/cpanel/ea-nodejs20/bin:$PATH
+APP=/home/metacodecx/fit90.metacodecx.com
+
+test -f "$APP/dist/src/main.js" || { echo "ERROR: $APP/dist/src/main.js is missing. Do not restart PM2."; exit 1; }
+
+if pm2 describe fit90 >/dev/null 2>&1; then
+  pm2 delete fit90
+fi
+
+NODE_ENV=production pm2 start "$APP/dist/src/main.js" --name fit90 --cwd "$APP"
+pm2 save
+pm2 status
+curl -i --max-time 10 http://127.0.0.1:4444/api/auth/me
+
+# Expected final HTTP status: 401 Unauthorized (the API is working and requires login).

@@ -1,0 +1,17 @@
+Local database test completed on 2026-09-08 against fit90_db only (branch_id = 1 / Fit90).
+
+Imported and verified:
+- Members: 2,688
+- Subscriptions: 4,706
+- Receipts created for opening paid amounts: 4,677
+- Potential members (club_leads): 17,424
+
+Verification passed:
+- All imported members, subscriptions, and potential members belong to branch_id 1.
+- No duplicate member phone numbers in the imported set.
+- Every subscription has a valid member and subscription type.
+- subscription_value - discount_value = paid_amount + remaining_amount for every imported subscription.
+- Old local attendance, freezes, refunds, transfers, points, and class bookings were cleared as part of the approved local replacement test.
+
+Excluded for review: 510 source rows. See needs_review.csv.
+The package was tested locally only; no production/server database was changed.

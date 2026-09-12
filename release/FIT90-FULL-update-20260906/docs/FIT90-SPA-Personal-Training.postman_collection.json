@@ -1,0 +1,282 @@
+{
+  "info": {
+    "_postman_id": "b0b5d6da-3131-4039-906c-9dd877091ba9",
+    "name": "FIT90 - Member App: SPA & Personal Training",
+    "description": "Member-facing SPA and Personal Training APIs based on trainer monthly availability plans. Run requests in order. The collection saves returned IDs automatically whenever data is available.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:4000/api", "type": "string" },
+    { "key": "language", "value": "ar", "type": "string" },
+    { "key": "accessToken", "value": "", "type": "string" },
+    { "key": "memberPhone", "value": "01007699555", "type": "string" },
+    { "key": "memberPassword", "value": "01007699555", "type": "string" },
+    { "key": "spaPlanId", "value": "1", "type": "string" },
+    { "key": "spaWindowId", "value": "1", "type": "string" },
+    { "key": "spaServiceId", "value": "1", "type": "string" },
+    { "key": "spaStartTime", "value": "10:00", "type": "string" },
+    { "key": "spaBookingId", "value": "1", "type": "string" },
+    { "key": "personalTrainingPlanId", "value": "1", "type": "string" },
+    { "key": "personalTrainingWindowId", "value": "1", "type": "string" },
+    { "key": "personalTrainingBookingId", "value": "1", "type": "string" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Member login — saves access token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('Login returns a member token', () => {",
+                  "  pm.expect(pm.response.code).to.equal(200);",
+                  "  pm.expect(body.accessToken).to.be.a('string').and.not.empty;",
+                  "});",
+                  "if (body.accessToken) pm.collectionVariables.set('accessToken', body.accessToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept-Language", "value": "{{language}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"{{memberPhone}}\",\n  \"password\": \"{{memberPassword}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/mobile/app/login", "host": ["{{baseUrl}}"], "path": ["mobile", "app", "login"] },
+            "description": "Test account: 01007699555. A newly created member's default password is the phone number. Change both variables if the member changed their password."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "SPA — trainer monthly plans",
+      "description": "The list contains the latest 15 published SPA plans, newest published first. A plan belongs to a trainer, not to a service.",
+      "item": [
+        {
+          "name": "1. List latest 15 published SPA schedules",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["const body = pm.response.json();", "pm.test('Returns at most 15 published SPA plans', () => pm.expect(body.data).to.be.an('array'));", "if (body.data?.[0]?.id) pm.collectionVariables.set('spaPlanId', body.data[0].id);"] } }],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept-Language", "value": "{{language}}" }],
+            "url": { "raw": "{{baseUrl}}/mobile/app/spa/monthly-schedules", "host": ["{{baseUrl}}"], "path": ["mobile", "app", "spa", "monthly-schedules"] },
+            "description": "The first returned plan ID is saved as spaPlanId."
+          },
+          "response": []
+        },
+        {
+          "name": "2. Open SPA schedule and its appointments",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["const body = pm.response.json();", "pm.test('Schedule contains attendance windows', () => pm.expect(body.windows).to.be.an('array'));", "const bookable = body.windows?.find((window) => window.availability?.canBook);", "if (bookable?.id) pm.collectionVariables.set('spaWindowId', bookable.id);"] } }],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept-Language", "value": "{{language}}" }],
+            "url": { "raw": "{{baseUrl}}/mobile/app/spa/monthly-schedules/{{spaPlanId}}", "host": ["{{baseUrl}}"], "path": ["mobile", "app", "spa", "monthly-schedules", "{{spaPlanId}}"] },
+            "description": "Each window exposes availability.status: BOOKING_AVAILABLE, BOOKING_NOT_STARTED, BOOKING_CLOSED, APPOINTMENT_STARTED, CANCELLED, or CAPACITY_FULL. A bookable window is saved as spaWindowId."
+          },
+          "response": []
+        },
+        {
+          "name": "3. List SPA service types for selected appointment",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["const body = pm.response.json();", "pm.test('Returns SPA service types', () => pm.expect(body.data).to.be.an('array'));", "if (body.data?.[0]?.id) pm.collectionVariables.set('spaServiceId', body.data[0].id);"] } }],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept-Language", "value": "{{language}}" }],
+            "url": { "raw": "{{baseUrl}}/mobile/app/spa/windows/{{spaWindowId}}/services", "host": ["{{baseUrl}}"], "path": ["mobile", "app", "spa", "windows", "{{spaWindowId}}", "services"] },
+            "description": "The first service ID is saved as spaServiceId."
+          },
+          "response": []
+        },
+        {
+          "name": "4. Check SPA subscription coverage or paid booking",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept-Language", "value": "{{language}}" }],
+            "url": { "raw": "{{baseUrl}}/mobile/app/spa/windows/{{spaWindowId}}/services/{{spaServiceId}}/eligibility", "host": ["{{baseUrl}}"], "path": ["mobile", "app", "spa", "windows", "{{spaWindowId}}", "services", "{{spaServiceId}}", "eligibility"] },
+            "description": "When coverageType=subscription, the response includes total, used, remaining and messageCode=SPA_FREE_BALANCE_AVAILABLE. When coverageType=pay_at_branch, messageCode=SPA_PAID_BOOKING_REQUIRED and amountDue state the exact paid amount. The message follows {{language}}: ar or en."
+          },
+          "response": []
+        },
+        {
+          "name": "5. List available start times for SPA service",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["const body = pm.response.json();", "pm.test('Returns available times for the selected window only', () => pm.expect(body.times).to.be.an('array'));", "if (body.times?.[0]?.startTime) pm.collectionVariables.set('spaStartTime', body.times[0].startTime);"] } }],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept-Language", "value": "{{language}}" }],
+            "url": { "raw": "{{baseUrl}}/mobile/app/spa/windows/{{spaWindowId}}/services/{{spaServiceId}}/times", "host": ["{{baseUrl}}"], "path": ["mobile", "app", "spa", "windows", "{{spaWindowId}}", "services", "{{spaServiceId}}", "times"] },
+            "description": "The first available start time is saved as spaStartTime."
+          },
+          "response": []
+        },
+        {
+          "name": "6. Confirm SPA booking",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["const body = pm.response.json();", "if (body.id) pm.collectionVariables.set('spaBookingId', body.id);"] } }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept-Language", "value": "{{language}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"availabilitySlotId\": {{spaWindowId}},\n  \"serviceId\": {{spaServiceId}},\n  \"startTime\": \"{{spaStartTime}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/mobile/app/spa/bookings", "host": ["{{baseUrl}}"], "path": ["mobile", "app", "spa", "bookings"] },
+            "description": "If capacity is full, API returns code APPOINTMENT_CAPACITY_FULL. The message follows {{language}}: ar or en."
+          },
+          "response": []
+        },
+        {
+          "name": "7. Join SPA wait list when capacity is full",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["const body = pm.response.json();", "pm.test('Creates a wait-list booking', () => pm.expect(body.status).to.equal('wait'));", "if (body.id) pm.collectionVariables.set('spaBookingId', body.id);"] } }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept-Language", "value": "{{language}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"availabilitySlotId\": {{spaWindowId}},\n  \"serviceId\": {{spaServiceId}},\n  \"startTime\": \"{{spaStartTime}}\",\n  \"joinWaitlist\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/mobile/app/spa/bookings", "host": ["{{baseUrl}}"], "path": ["mobile", "app", "spa", "bookings"] },
+            "description": "Run this only after the appointment returns APPOINTMENT_CAPACITY_FULL. It records a wait-list booking (status=wait) and does not consume a free SPA credit."
+          },
+          "response": []
+        },
+        {
+          "name": "8. My SPA bookings",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept-Language", "value": "{{language}}" }],
+            "url": { "raw": "{{baseUrl}}/mobile/app/spa/bookings/my?scope=upcoming", "host": ["{{baseUrl}}"], "path": ["mobile", "app", "spa", "bookings", "my"], "query": [{ "key": "scope", "value": "upcoming" }] },
+            "description": "Use scope=upcoming, past, or all."
+          },
+          "response": []
+        },
+        {
+          "name": "9. Cancel my SPA booking",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Accept-Language", "value": "{{language}}" }],
+            "url": { "raw": "{{baseUrl}}/mobile/app/spa/bookings/{{spaBookingId}}/cancel", "host": ["{{baseUrl}}"], "path": ["mobile", "app", "spa", "bookings", "{{spaBookingId}}", "cancel"] },
+            "description": "spaBookingId is saved by Confirm SPA booking, or set it from My SPA bookings."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Personal Training — trainer monthly plans",
+      "description": "The list contains the latest 20 published Personal Training plans, newest published first. Booking is allowed only when the member has remaining PT sessions.",
+      "item": [
+        {
+          "name": "1. List latest 20 published Personal Training schedules",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["const body = pm.response.json();", "pm.test('Returns at most 20 published PT plans', () => pm.expect(body.data).to.be.an('array'));", "if (body.data?.[0]?.id) pm.collectionVariables.set('personalTrainingPlanId', body.data[0].id);"] } }],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept-Language", "value": "{{language}}" }],
+            "url": { "raw": "{{baseUrl}}/mobile/app/personal-training/monthly-schedules", "host": ["{{baseUrl}}"], "path": ["mobile", "app", "personal-training", "monthly-schedules"] },
+            "description": "The first returned plan ID is saved as personalTrainingPlanId."
+          },
+          "response": []
+        },
+        {
+          "name": "2. Open Personal Training schedule and its appointments",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["const body = pm.response.json();", "pm.test('Schedule contains attendance windows', () => pm.expect(body.windows).to.be.an('array'));", "const bookable = body.windows?.find((window) => window.availability?.canBook);", "if (bookable?.id) pm.collectionVariables.set('personalTrainingWindowId', bookable.id);"] } }],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept-Language", "value": "{{language}}" }],
+            "url": { "raw": "{{baseUrl}}/mobile/app/personal-training/monthly-schedules/{{personalTrainingPlanId}}", "host": ["{{baseUrl}}"], "path": ["mobile", "app", "personal-training", "monthly-schedules", "{{personalTrainingPlanId}}"] },
+            "description": "The response states whether each appointment is available, booking has not started, is closed, started, cancelled, or capacity is full."
+          },
+          "response": []
+        },
+        {
+          "name": "3. Check remaining Personal Training sessions",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept-Language", "value": "{{language}}" }],
+            "url": { "raw": "{{baseUrl}}/mobile/app/personal-training/windows/{{personalTrainingWindowId}}/eligibility", "host": ["{{baseUrl}}"], "path": ["mobile", "app", "personal-training", "windows", "{{personalTrainingWindowId}}", "eligibility"] },
+            "description": "Response contains total, used, reserved, remaining, and hasPersonalTrainingSubscription. Example: total 5, used 2, remaining 3."
+          },
+          "response": []
+        },
+        {
+          "name": "4. Confirm Personal Training booking",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["const body = pm.response.json();", "if (body.id) pm.collectionVariables.set('personalTrainingBookingId', body.id);"] } }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept-Language", "value": "{{language}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"availabilitySlotId\": {{personalTrainingWindowId}}\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/mobile/app/personal-training/bookings", "host": ["{{baseUrl}}"], "path": ["mobile", "app", "personal-training", "bookings"] },
+            "description": "If no sessions remain, API returns PERSONAL_TRAINING_SUBSCRIPTION_UNAVAILABLE and does not create a booking. If full, it returns APPOINTMENT_CAPACITY_FULL."
+          },
+          "response": []
+        },
+        {
+          "name": "5. Join Personal Training wait list when capacity is full",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["const body = pm.response.json();", "pm.test('Creates a wait-list booking', () => pm.expect(body.status).to.equal('wait'));", "if (body.id) pm.collectionVariables.set('personalTrainingBookingId', body.id);"] } }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept-Language", "value": "{{language}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"availabilitySlotId\": {{personalTrainingWindowId}},\n  \"joinWaitlist\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/mobile/app/personal-training/bookings", "host": ["{{baseUrl}}"], "path": ["mobile", "app", "personal-training", "bookings"] },
+            "description": "Run this only after the appointment is full. A wait-list request still requires an available Personal Training subscription and keeps its status as wait without consuming a session."
+          },
+          "response": []
+        },
+        {
+          "name": "6. My Personal Training bookings",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept-Language", "value": "{{language}}" }],
+            "url": { "raw": "{{baseUrl}}/mobile/app/personal-training/bookings/my?scope=upcoming", "host": ["{{baseUrl}}"], "path": ["mobile", "app", "personal-training", "bookings", "my"], "query": [{ "key": "scope", "value": "upcoming" }] },
+            "description": "Use scope=upcoming, past, or all."
+          },
+          "response": []
+        },
+        {
+          "name": "7. Cancel my Personal Training booking",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Accept-Language", "value": "{{language}}" }],
+            "url": { "raw": "{{baseUrl}}/mobile/app/personal-training/bookings/{{personalTrainingBookingId}}/cancel", "host": ["{{baseUrl}}"], "path": ["mobile", "app", "personal-training", "bookings", "{{personalTrainingBookingId}}", "cancel"] },
+            "description": "personalTrainingBookingId is saved by Confirm Personal Training booking, or set it from My Personal Training bookings."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

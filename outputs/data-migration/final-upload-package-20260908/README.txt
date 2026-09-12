@@ -1,0 +1,1 @@
+Validated against local branch 1. Import members first, persist legacy_member_id to new ID crosswalk, then subscriptions, then leads. Do not import directly with phpMyAdmin. remaining_amount is recalculated as subscription_value - discount_value - paid_amount; legacy_remaining_amount preserves the original exported value.

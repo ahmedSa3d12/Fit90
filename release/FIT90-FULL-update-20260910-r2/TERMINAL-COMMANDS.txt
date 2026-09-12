@@ -1,0 +1,31 @@
+# Upload FIT90-FULL-update-20260910-r2.zip to:
+# /home/metacodecx/fit90.metacodecx.com/
+#
+# Step 1 — ROOT precheck (required before cPanel runs the deploy):
+APP=/home/metacodecx/fit90.metacodecx.com
+if [ -d "$APP/dist" ]; then
+  chown -R metacodecx:metacodecx "$APP/dist"
+fi
+
+# Step 2 — run as the cPanel account (NOT root):
+export PATH=/opt/cpanel/ea-nodejs20/bin:$PATH
+mkdir -p /home/metacodecx/fit90-updates/2026-09-10-r2
+unzip -o /home/metacodecx/fit90.metacodecx.com/FIT90-FULL-update-20260910-r2.zip -d /home/metacodecx/fit90-updates/2026-09-10-r2
+cd /home/metacodecx/fit90-updates/2026-09-10-r2/FIT90-FULL-update-20260910-r2
+bash deploy-cpanel.sh /home/metacodecx/fit90.metacodecx.com
+
+# Step 3 — ROOT PM2 start (only after Step 2 succeeds):
+export PATH=/opt/cpanel/ea-nodejs20/bin:$PATH
+APP=/home/metacodecx/fit90.metacodecx.com
+test -f "$APP/dist/src/main.js" || { echo "ERROR: compiled main file is missing"; exit 1; }
+chown -R metacodecx:metacodecx "$APP/dist"
+if pm2 describe fit90 >/dev/null 2>&1; then
+  pm2 delete fit90
+fi
+NODE_ENV=production pm2 start "$APP/dist/src/main.js" --name fit90 --cwd "$APP"
+pm2 save
+pm2 status
+curl -i --max-time 10 http://127.0.0.1:4444/api/auth/me
+
+# This release does not run prisma db push, prisma migrate deploy, import data,
+# seed data, replace .env, or copy uploads.

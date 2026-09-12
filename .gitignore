@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build output
+dist/
+**/dist/
+dist-ssr/
+build/
+
+# Env & secrets
+.env
+.env.*
+!.env.example
+*.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# Prisma local db
+prisma/*.db
+**/prisma/*.db
+
+# Test coverage
+coverage/
+
+# Uploads (runtime user content)
+uploads/
+**/uploads/
+
+# OS
+.DS_Store
+**/.DS_Store
+
+# Editor
+.idea/
+.vscode/
+*.swp

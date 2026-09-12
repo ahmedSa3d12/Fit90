@@ -1,0 +1,18 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "backend",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd backend && PORT=4090 npm run start:dev"],
+      "port": 4090
+    },
+    {
+      "name": "frontend",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd frontend && VITE_API_TARGET=http://localhost:4090 npm run dev"],
+      "port": 5173,
+      "autoPort": true
+    }
+  ]
+}

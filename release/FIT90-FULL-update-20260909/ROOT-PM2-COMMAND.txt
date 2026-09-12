@@ -1,0 +1,8 @@
+# Execute these commands as root only, after deploy-cpanel.sh completes successfully.
+export PATH=/opt/cpanel/ea-nodejs20/bin:$PATH
+cd /home/metacodecx/fit90.metacodecx.com
+pm2 restart fit90 --update-env
+pm2 status
+curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:4444/api/auth/me
+
+# Expected final HTTP status: 401 (the API is alive and requires authentication).

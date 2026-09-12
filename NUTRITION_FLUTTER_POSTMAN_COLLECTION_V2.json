@@ -1,0 +1,75 @@
+{
+  "info": {
+    "_postman_id": "7f1bb8b8-9a42-4fbd-8c11-54b6528c43df",
+    "name": "FIT90 - Nutrition Mobile API V2 (calendar first)",
+    "description": "Required client flow: provider -> monthly calendar (without serviceId) -> service -> eligibility -> available times (with serviceId) -> booking.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "https://fit90.metacodecx.com/api", "type": "string" },
+    { "key": "accessToken", "value": "", "type": "string" },
+    { "key": "phone", "value": "", "type": "string" },
+    { "key": "password", "value": "", "type": "string" },
+    { "key": "trainerId", "value": "", "type": "string" },
+    { "key": "serviceId", "value": "", "type": "string" },
+    { "key": "availabilitySlotId", "value": "", "type": "string" },
+    { "key": "bookingId", "value": "", "type": "string" },
+    { "key": "year", "value": "2026", "type": "string" },
+    { "key": "month", "value": "8", "type": "string" },
+    { "key": "date", "value": "2026-08-27", "type": "string" },
+    { "key": "startTime", "value": "15:30", "type": "string" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "1. Login customer (saves token)",
+      "request": {
+        "auth": { "type": "noauth" }, "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"phone\": \"{{phone}}\",\n  \"password\": \"{{password}}\"\n}", "options": { "raw": { "language": "json" } } },
+        "url": "{{baseUrl}}/mobile/app/login"
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["if (pm.response.code === 200) {", "  pm.collectionVariables.set('accessToken', pm.response.json().accessToken);", "}"] } }]
+    },
+    {
+      "name": "2. Nutrition providers",
+      "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/mobile/app/nutrition/providers", "description": "Customer chooses the nutrition specialist first. Save id as trainerId." }
+    },
+    {
+      "name": "3. Provider monthly calendar BEFORE service",
+      "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/mobile/app/nutrition/schedule?trainerId={{trainerId}}&year={{year}}&month={{month}}", "description": "Do not send serviceId here. Response has service=null and days[].windows for the provider attendance calendar; days[].times is empty." }
+    },
+    {
+      "name": "4. Nutrition services AFTER calendar",
+      "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/mobile/app/nutrition/services", "description": "Customer chooses a service after choosing a provider/day. Save id as serviceId." }
+    },
+    {
+      "name": "5. Eligibility / subscription or pay at branch",
+      "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/mobile/app/nutrition/eligibility?serviceId={{serviceId}}&date={{date}}", "description": "Show remaining sessions for coverageType=subscription. For coverageType=pay_at_branch show amountDue and payment at attendance, but allow booking." }
+    },
+    {
+      "name": "6. Available times AFTER service",
+      "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/mobile/app/nutrition/schedule?serviceId={{serviceId}}&trainerId={{trainerId}}&year={{year}}&month={{month}}", "description": "Now service is supplied. Use days[].times only; the server computes duration and removes booked overlaps." }
+    },
+    {
+      "name": "7. Create nutrition booking",
+      "request": {
+        "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"availabilitySlotId\": {{availabilitySlotId}},\n  \"serviceId\": {{serviceId}},\n  \"startTime\": \"{{startTime}}\",\n  \"notes\": \"\"\n}", "options": { "raw": { "language": "json" } } },
+        "url": "{{baseUrl}}/mobile/app/nutrition/bookings",
+        "description": "availabilitySlotId and startTime must come from request 6. On HTTP 409 reload requests 3 and 6."
+      }
+    },
+    {
+      "name": "8. My nutrition bookings",
+      "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/mobile/app/nutrition/bookings/my?scope=upcoming" }
+    },
+    {
+      "name": "9. Cancel nutrition booking",
+      "request": { "method": "PATCH", "header": [], "url": "{{baseUrl}}/mobile/app/nutrition/bookings/{{bookingId}}/cancel" }
+    }
+  ]
+}

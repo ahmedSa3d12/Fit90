@@ -1,0 +1,3419 @@
+// ONE80 Gym & Fitness Hub — Prisma schema (Phase 1 scope: Foundation, Auth/RBAC, Dashboard, Employees)
+// Source: noamanycenter_hr.sql (CodeIgniter 3 legacy, MySQL 8.0.46). 40 scope tables.
+//
+// FAITHFULNESS RULES APPLIED:
+//   * All table/column names preserved via @@map / @map (snake_case kept as-is).
+//   * VARCHAR-stored dates kept as String (commented "// date-string ..."). NEVER auto-cast.
+//   * enum('yes','no') and other enums kept as native Prisma enums to preserve exact stored values
+//     (NOT Boolean — legacy stores literal 'yes'/'no').
+//   * tinyint/int boolean-ish flags kept as Int (magic values) unless clearly tinyint(1) -> Boolean.
+//   * Original engine/charset noted per model. Target migration -> InnoDB + utf8mb4.
+//   * Relations: only SAFE, single-typed id links declared. Dual-keyed / varchar emp_code / uncertain
+//     links are left as plain scalar columns with a "// FK-by-convention" comment (do NOT enforce yet).
+//
+// PKs & AUTO_INCREMENT come from trailing ALTER TABLE in the dump (not inline).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// =====================================================================================
+//  ENUMS (deduplicated; legacy stores the literal lowercase string)
+// =====================================================================================
+
+enum YesNo {
+  yes
+  no
+}
+
+enum HaletKafala {
+  kafala
+  ajeer
+  zeyara
+  other
+  saudi
+  eqama
+}
+
+enum TaskenType {
+  alone
+  family
+}
+
+enum No3Emp {
+  eshraf
+  schools
+}
+
+enum WazefaType {
+  moder
+  emp
+}
+
+enum HdoorTtype {
+  hdoor
+  ensraf
+  Out
+}
+
+enum TasgelType {
+  automatic
+  manual
+}
+
+enum HdodrBranche {
+  all
+  aja
+}
+
+enum No3Dawam {
+  full
+  half
+}
+
+enum GymSettingType {
+  target
+  proten
+  classes
+}
+
+enum BrCode {
+  A
+  B
+  C
+  EMPTY @map("")
+}
+
+enum CountryFromType {
+  country
+  city
+  region
+}
+
+enum BookingStatus {
+  Aktif
+  Nonaktif
+}
+
+// =====================================================================================
+//  FOUNDATION / CONFIG
+// =====================================================================================
+
+/// Institute-wide singleton. Rebrand anchor: institute_name => "ONE80 Gym & Fitness Hub".
+/// Engine=InnoDB, charset=utf8mb3. PK id (no AUTO_INCREMENT).
+model global_settings {
+  id                   Int      @id
+  institute_name       String   @db.VarChar(255)
+  institute_code       String   @db.VarChar(255)
+  use_barcode          String?  @db.VarChar(3) // bool-as-string
+  reg_prefix           String   @db.VarChar(255)
+  institute_email      String   @db.VarChar(100)
+  address              String   @db.Text
+  mobileno             String   @db.VarChar(100)
+  logo                 String?  @db.VarChar(500)
+  currency             String   @db.VarChar(100)
+  currency_symbol      String   @db.VarChar(100)
+  sms_service_provider String   @db.VarChar(100)
+  session_id           Int
+  translation          String   @db.VarChar(100)
+  footer_text          String   @db.VarChar(255)
+  animations           String   @db.VarChar(100)
+  timezone             String   @db.VarChar(100)
+  date_format          String   @db.VarChar(100) // HAZARD: original CHARSET utf32
+  facebook_url         String   @db.VarChar(255)
+  twitter_url          String   @db.VarChar(255)
+  linkedin_url         String   @db.VarChar(255)
+  youtube_url          String   @db.VarChar(255)
+  instagram_url        String?  @db.VarChar(200)
+  snapchat_url         String?  @db.VarChar(200)
+  cron_secret_key      String?  @db.VarChar(255)
+  preloader_backend    Int?     @default(1) @db.TinyInt // tinyint(1) -> boolean
+  cms_default_branch   Int // FK-by-convention -> tbl_branches.branch_id
+  created_at           DateTime @default(now()) @db.Timestamp(0)
+  updated_at           DateTime @db.DateTime(0)
+  ketm_image           String?  @db.VarChar(200)
+  alert_days_contract  Int? // dashboard alert window (contracts)
+  alert_days_quest     Int? // dashboard alert window (iqama/residency)
+
+  @@map("global_settings")
+}
+
+/// Legacy CMS/website + SMTP config singleton. Most string cols originally latin1 (Indonesian names).
+/// Engine=MyISAM, charset=utf8mb3. PK id_config (AI).
+model conf_company_data {
+  id_config            Int           @id @default(autoincrement())
+  nameweb              String        @db.VarChar(200)
+  abbreviation_name    String?       @db.VarChar(255)
+  slogan               String?       @db.VarChar(200)
+  summary_company      String?       @db.Text
+  deskripsi            String?       @db.Text
+  website              String?       @db.VarChar(255) // latin1
+  email                String?       @db.VarChar(255) // latin1
+  email_cadangan       String?       @db.VarChar(255) // latin1
+  address              String?       @db.Text
+  telepon              String?       @db.VarChar(50) // latin1
+  hp                   String?       @db.VarChar(50) // latin1
+  fax                  String?       @db.VarChar(50) // latin1
+  logo                 String?       @db.VarChar(255) // latin1
+  icon                 String?       @db.VarChar(255) // latin1
+  footer               String?       @db.VarChar(255) // latin1
+  keywords             String?       @db.VarChar(400)
+  metatext             String?       @db.Text
+  facebook             String?       @db.VarChar(255) // latin1
+  twitter              String?       @db.VarChar(255) // latin1
+  instagram            String?       @db.VarChar(255) // latin1
+  google_plus          String?       @db.VarChar(255) // latin1
+  google_map           String?       @db.Text // latin1
+  judul_1              String?       @db.VarChar(200) // latin1
+  pesan_1              String?       @db.VarChar(200) // latin1
+  judul_2              String?       @db.VarChar(200) // latin1
+  pesan_2              String?       @db.VarChar(200) // latin1
+  judul_3              String?       @db.VarChar(200) // latin1
+  pesan_3              String?       @db.VarChar(200) // latin1
+  judul_4              String?       @db.VarChar(200) // latin1
+  pesan_4              String?       @db.VarChar(200) // latin1
+  judul_5              String?       @db.VarChar(200) // latin1
+  pesan_5              String        @db.VarChar(200) // latin1 NOT NULL
+  judul_6              String?       @db.VarChar(200) // latin1
+  pesan_6              String        @db.VarChar(200) // latin1 NOT NULL
+  isi_1                String?       @db.VarChar(500) // latin1
+  isi_2                String?       @db.VarChar(500) // latin1
+  isi_3                String?       @db.VarChar(500) // latin1
+  isi_4                String?       @db.VarChar(500) // latin1
+  isi_5                String?       @db.VarChar(500) // latin1
+  isi_6                String?       @db.VarChar(500) // latin1
+  link_1               String?       @db.VarChar(255) // latin1
+  link_2               String?       @db.VarChar(255) // latin1
+  link_3               String?       @db.VarChar(255) // latin1
+  link_4               String?       @db.VarChar(255) // latin1
+  link_5               String?       @db.VarChar(255) // latin1
+  link_6               String?       @db.VarChar(255) // latin1
+  javawebmedia         String?       @db.Text // latin1
+  gambar               String?       @db.VarChar(255) // latin1
+  video                String?       @db.VarChar(255) // latin1
+  rekening             String?       @db.Text // latin1
+  gambar_berita        String?       @db.VarChar(255) // latin1
+  status_form_booking  BookingStatus // enum('Aktif','Nonaktif') latin1, NOT NULL
+  max_room_booking     Int?
+  nama_direktur        String?       @db.VarChar(255) // latin1
+  jabatan              String?       @db.VarChar(255) // latin1
+  stempel_tanda_tangan String?       @db.VarChar(255) // latin1
+  protocol             String        @db.VarChar(255) // latin1 NOT NULL
+  smtp_host            String        @db.VarChar(255) // latin1 NOT NULL
+  smtp_port            Int
+  smtp_timeout         Int
+  smtp_user            String        @db.VarChar(255) // latin1 NOT NULL
+  smtp_pass            String        @db.VarChar(255) // latin1 NOT NULL
+  id_user              Int
+  tanggal              DateTime      @default(now()) @updatedAt @db.Timestamp(0)
+  image                String?       @db.VarChar(300)
+  max_num              Int?
+
+  @@map("conf_company_data")
+}
+
+/// Hierarchical country/city/region lookup. Engine=InnoDB, utf8mb3. PK main_id (AI). KEY from_id.
+model conf_country_setting {
+  main_id   Int              @id @default(autoincrement())
+  name      String?          @db.VarChar(100)
+  from_id   Int? // self-ref parent (declared KEY in dump)
+  from_type CountryFromType?
+  created   DateTime         @default(now()) @db.DateTime(0)
+  updated   DateTime?        @db.DateTime(0)
+
+  @@index([from_id])
+  @@map("conf_country_setting")
+}
+
+/// Newer hierarchical city list. Engine=InnoDB, utf8mb3. PK id (AI).
+model cities {
+  id         Int    @id @default(autoincrement())
+  name       String @db.VarChar(300)
+  from_id_fk Int    @default(0) // self-ref parent (FK-by-convention)
+  in_order   String @default("0") @db.VarChar(255) // numeric-as-string sort order
+
+  @@map("cities")
+}
+
+/// Legacy city list. Engine=MyISAM, TABLE charset=latin1 (column overridden utf8mb3). PK city_id (AI).
+model tbl_city {
+  city_id   Int     @id @default(autoincrement())
+  city_name String? @db.VarChar(100)
+
+  @@map("tbl_city")
+}
+
+// =====================================================================================
+//  BRANCHES
+// =====================================================================================
+
+/// LIVE canonical branch entity. Engine=InnoDB, utf8mb3_unicode_ci. PK branch_id (AI).
+model tbl_branches {
+  branch_id   Int     @id @default(autoincrement())
+  branch_name String? @db.VarChar(50)
+  from_id     Int // parent/region (0 = root)
+
+  @@map("tbl_branches")
+}
+
+/// LIVE branch geofence settings (parallel to tbl_branches). Engine=MyISAM, utf8mb3. PK id (AI).
+model branch_settings {
+  id       Int     @id @default(autoincrement())
+  title    String  @db.VarChar(255)
+  from_id  Int // parent
+  lat_map  String? @db.VarChar(200)
+  long_map String? @db.VarChar(200)
+
+  @@map("branch_settings")
+}
+
+/// Store-variant branch settings (near-duplicate). Engine=MyISAM, utf8mb3. PK id (AI).
+model store_branch_settings {
+  id       Int     @id @default(autoincrement())
+  title    String  @db.VarChar(15)
+  br_code  BrCode? // enum('A','B','C','')
+  from_id  Int
+  lat_map  String? @db.VarChar(15)
+  long_map String? @db.VarChar(15)
+
+  @@map("store_branch_settings")
+}
+
+/// Society/association locations. UNUSED by live employees (socity_branch_id_fk all NULL).
+/// Engine=InnoDB, utf8mb3. PK id (AI).
+model socity_branch {
+  id       Int     @id @default(autoincrement())
+  title    String  @db.VarChar(255)
+  lat_map  String? @db.VarChar(100)
+  long_map String? @db.VarChar(100)
+
+  @@map("socity_branch")
+}
+
+// =====================================================================================
+//  PROCUREMENT (gym-sales)
+// =====================================================================================
+
+// =====================================================================================
+//  FINANCIAL REPORTS (التقارير المالية — operational expenses & revenues)
+// =====================================================================================
+
+// =====================================================================================
+//  FINANCIAL ACCOUNTING (المحاسبة المالية — GL / double-entry)
+// =====================================================================================
+
+enum AccountType {
+  asset
+  liability
+  equity
+  revenue
+  expense
+}
+
+enum NormalBalance {
+  debit
+  credit
+}
+
+enum JournalEntryStatus {
+  draft
+  posted
+  reversed
+}
+
+enum PeriodStatus {
+  open
+  closed
+  locked
+}
+
+// =====================================================================================
+//  APP MANAGEMENT (إدارة التطبيق — mobile app CMS)
+// =====================================================================================
+
+enum AmInvitationStatus {
+  pending
+  accepted
+  rejected
+  attended
+}
+
+enum AmExerciseDifficulty {
+  easy
+  medium
+  hard
+}
+
+model users {
+  user_id              Int     @id @default(autoincrement())
+  agent_brok_fk        Int? // FK-by-convention
+  emp_code             Int? // FK-by-convention -> employees.emp_code (varchar/int mismatch; not enforced)
+  username             String? @db.VarChar(40)
+  password             String? @db.VarChar(255) // bcrypt going forward; legacy sha1(md5) tolerated until rehash on login
+  name                 String? @db.VarChar(100)
+  email                String? @db.VarChar(50)
+  address              String? @db.VarChar(200)
+  level                Int? // COMMENT '1:admin , 2:emp'
+  role_id_fk           Int? // FK-by-convention -> role (out of scope)
+  image                String? @db.VarChar(500)
+  x_y_z                String? @db.VarChar(300)
+  branch_id_fk         Int? // FK-by-convention -> tbl_branches.branch_id
+  app_pass             String? @db.VarChar(100) // SHA-1 hex (mobile)
+  approved             Int?    @default(1) // bool-as-int
+  pass_demo            String? @db.VarChar(100)
+  user_pass            String? @db.VarChar(500) // duplicate password store
+  device_token         String  @default("") @db.VarChar(255) // legacy NOT NULL w/o default — defaulted for strict InnoDB
+  must_change_password Boolean @default(false)
+
+  // Safe relation: permissions junction keyed by user_id (int = int).
+  permissions    permissions[]
+  class_bookings club_class_bookings[]
+
+  @@map("users")
+}
+
+/// Navigation/menu pages + permission targets. Engine=MyISAM, utf8mb3. PK page_id (AI=302).
+model pages {
+  page_id        Int     @id @default(autoincrement())
+  page_title     String  @db.VarChar(255)
+  page_link      String  @db.VarChar(255)
+  group_id_fk    Int // menu group (FK-by-convention)
+  level          Int
+  page_order     Int
+  page_icon_code String  @db.VarChar(255)
+  page_photo     String  @default("0") @db.VarChar(500)
+  bg_color       String? @db.VarChar(10)
+  width          String? @db.VarChar(10)
+  color          String? @db.VarChar(10)
+  class          String? @db.VarChar(10)
+
+  permissions permissions[]
+
+  @@map("pages")
+}
+
+/// RBAC junction user<->page. Engine=InnoDB, utf8mb3, 6572 rows.
+/// HAZARD: original table has NO primary key / NO index. We synthesize a composite PK here.
+/// VERIFY (user_id, page_id_fk) is unique before migrating; otherwise switch to a surrogate id.
+model permissions {
+  user_id    Int // -> users.user_id
+  page_id_fk Int // -> pages.page_id
+  page_level Int // access level
+
+  user users @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
+  page pages @relation(fields: [page_id_fk], references: [page_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([user_id, page_id_fk])
+  @@index([page_id_fk])
+  @@map("permissions")
+}
+
+/// Mobile app screens. Engine=InnoDB, utf8mb4_0900_ai_ci. PK id (AI=23).
+model app_pages {
+  id             Int     @id @default(autoincrement())
+  title          String? @db.VarChar(50)
+  active         YesNo   @default(yes)
+  page_order     Int?
+  screen_num     Int?    @db.TinyInt
+  icon_path      String? @db.VarChar(300)
+  icon_path_past String? @db.VarChar(200)
+
+  @@map("app_pages")
+}
+
+/// Per-user delivered notifications. Engine=MyISAM, utf8mb3_unicode_ci, 19921 rows. PK id (AI).
+model users_notifications {
+  id           Int     @id @default(autoincrement())
+  notify_id_fk Int? // FK-by-convention -> tbl_notifications / tbl_sys_notifications_settings
+  message      String? @db.VarChar(1000)
+  url          String? @db.VarChar(100)
+  date         String? @db.VarChar(100) // date-string
+  type         Int?    @db.TinyInt
+  approved     Int?    @db.TinyInt // bool-as-tinyint
+
+  @@map("users_notifications")
+}
+
+/// Notification events. Engine=InnoDB, utf8mb3. PK id (AI=65).
+model tbl_notifications {
+  id           Int     @id @default(autoincrement())
+  from_user    Int? // -> users.user_id (FK-by-convention)
+  to_user      Int? // -> users.user_id (FK-by-convention)
+  date_ar      String? @db.VarChar(15) // date-string
+  time_ar      String? @db.VarChar(15) // time-string
+  seen         Int     @default(0) @db.TinyInt // bool
+  seen_date    String? @db.VarChar(15) // date-string
+  seen_time    String? @db.VarChar(10) // time-string
+  fk_id        BigInt? // polymorphic target id
+  notify_id_fk Int?
+  n_code       Int?
+  test_num     Int?
+
+  @@index([to_user, seen])
+  @@index([to_user, n_code, fk_id, seen])
+  @@map("tbl_notifications")
+}
+
+/// Notification type/route registry. Engine=InnoDB, utf8mb3. PK id (AI=18).
+model tbl_sys_notifications_settings {
+  id      Int     @id @default(autoincrement())
+  code    Int?
+  t_table String? @db.VarChar(100) // target table name (polymorphic)
+  url     String? @db.VarChar(100)
+  title   String? @db.VarChar(100)
+
+  @@map("tbl_sys_notifications_settings")
+}
+
+// =====================================================================================
+//  EMPLOYEES (authoritative) + dependents
+// =====================================================================================
+
+/// AUTHORITATIVE EMPLOYEE table (147 rows, ~150 cols). Engine=MyISAM, utf8mb3. PK id (AI=149).
+/// emp_code is the cross-table business key. Many date columns are VARCHAR (Hijri _h / Greg _m,_s / Arabic _ar).
+model employees {
+  id                      Int         @id @default(autoincrement())
+  employee                String?     @db.VarChar(200) // full name
+  emp_code                Int? // BUSINESS KEY
+  branch_id_fk            Int? // -> tbl_branches.branch_id
+  emp_code_g              Int?
+  socity_branch_id_fk     Int? // -> socity_branch (all NULL in data)
+  branche_work_id_fk      Int?
+  branche_sub_work_id_fk  Int?
+  emp_type                Int         @default(1) @db.TinyInt
+  card_num                BigInt?     @default(0)
+  demo_card               String      @db.VarChar(15) // NOT NULL no default (HAZARD)
+  gender                  Int?        @db.TinyInt
+  f2a_contract            Int?
+  cat_manager_id_fk       String?     @db.VarChar(255)
+  insurance_number        Int?
+  city_id_fk              Int? // -> cities / tbl_city
+  hai_id_fk               Int? // district
+  street_name             String?     @db.VarChar(255)
+  bank                    Int?        @db.TinyInt
+  bank_num                String?     @db.VarChar(255)
+  status                  Int?        @db.TinyInt
+  phone                   String?     @db.VarChar(20)
+  administration          Int?
+  department              String?     @db.VarChar(100)
+  degree_id               String?     @db.VarChar(100)
+  contract                String?     @db.VarChar(100)
+  personal_photo          String?     @db.VarChar(200)
+  emp_sign                String?     @db.VarChar(255)
+  birth_date              String?     @db.VarChar(255) // date-string
+  birth_date_m            String?     @db.VarChar(30) // date-string Gregorian
+  birth_date_h            String?     @db.VarChar(30) // date-string Hijri
+  type_card               String?     @db.VarChar(100)
+  dest_card               String?     @db.VarChar(100)
+  passport_number         String?     @db.VarChar(50)
+  date_start_passport     String?     @db.VarChar(50) // date-string
+  date_end_passport       String?     @db.VarChar(50) // date-string
+  esdar_date              String?     @db.VarChar(20) // date-string (issue)
+  esdar_date_m            String?     @db.VarChar(30) // date-string Gregorian
+  esdar_date_h            String?     @db.VarChar(30) // date-string Hijri
+  end_date                String?     @db.VarChar(255) // date-string
+  end_date_m              String?     @db.VarChar(30) // date-string Gregorian
+  end_date_h              String?     @db.VarChar(30) // date-string Hijri
+  adress                  String?     @db.VarChar(100)
+  adress_other            String?     @db.VarChar(100)
+  email                   String?     @db.VarChar(200)
+  nationality             String?     @db.VarChar(100)
+  deyana                  String?     @db.VarChar(20) // religion
+  employee_degree         String?     @db.VarChar(100)
+  employee_qualification  String?     @db.VarChar(100)
+  employee_type           Int         @default(1)
+  employment_type         String?     @db.VarChar(20)
+  reason                  String?     @db.VarChar(100)
+  manger                  String?     @db.VarChar(20)
+  type_tamin              String?     @db.VarChar(100)
+  start_work_date_m       String?     @db.VarChar(255) // date-string Gregorian
+  start_work_date_h       String?     @db.VarChar(30) // date-string Hijri
+  end_contract_date_m     String?     @db.VarChar(255) // date-string Gregorian
+  end_contract_date_h     String?     @db.VarChar(30) // date-string Hijri
+  end_service_date_m      String?     @db.VarChar(30) // date-string Gregorian
+  end_service_date_h      String?     @db.VarChar(30) // date-string Hijri
+  work_maktb              String?     @db.VarChar(50)
+  another_phone           String?     @db.VarChar(20)
+  snap_chat               String?     @db.VarChar(50)
+  twiter                  String?     @db.VarChar(255)
+  start_tamin_date_m      String?     @db.VarChar(30) // date-string Gregorian
+  start_tamin_date_h      String?     @db.VarChar(30) // date-string Hijri
+  type_tamin__medicine    String?     @db.VarChar(100)
+  tamin_company           String?     @db.VarChar(100)
+  tamin_medicine_num      String?     @db.VarChar(200)
+  tamin_medicine_end_date String?     @db.VarChar(15) // date-string
+  tamin_medicine_company  String?     @db.VarChar(70)
+  polica_num              String?     @db.VarChar(200)
+  tamin_type              String?     @db.VarChar(100)
+  tamin_date_m            String?     @db.VarChar(30) // date-string Gregorian
+  tamin_date_h            String?     @db.VarChar(30) // date-string Hijri
+  leave_emp               Int?        @db.TinyInt // bool
+  executive_management_fk Int?        @db.TinyInt // tinyint(1) bool
+  manger_type             Int?        @db.TinyInt
+  publisher               Int?
+  date                    String?     @db.VarChar(30) // date-string
+  tahwela_rkm             Int?
+  edara_n                 String?     @db.VarChar(50) // department name
+  qsm_n                   String?     @db.VarChar(50) // section name
+  mosma_wazefy_code       Int? // -> department_jobs (job title code)
+  mosma_wazefy_tarteb     Int?        @db.TinyInt
+  mosma_wazefy_n          String?     @db.VarChar(50)
+  mosma_wazefy_eqama_n    String?     @db.VarChar(100)
+  test_num_month          Int?
+  end_test_date_m         String?     @db.VarChar(30) // date-string Gregorian
+  edara_id                Int? // -> hr_edarat_aqsam (department)
+  qsm_id                  Int? // -> section
+  w7da_id                 Int?
+  markz_id                Int?
+  markz_name              String?     @db.VarChar(50)
+  cat_mosayer_id_fk       Int?        @db.TinyInt
+  show_in_mosayer         YesNo?
+  show_in_tamen           YesNo?
+  use_signature           String?     @db.VarChar(50)
+  users_signatures        String?     @db.VarChar(255)
+  bbank                   String?     @db.VarChar(500)
+  x1                      String?     @db.VarChar(15)
+  x2                      String?     @db.VarChar(15)
+  rkm_saheb_amal          String?     @db.VarChar(15)
+  tasken_type             TaskenType?
+  tasken_vlaue            Decimal?    @db.Decimal(19, 2)
+  motawen                 YesNo?
+  download_app            Int?        @db.TinyInt
+  token                   String?     @db.VarChar(500)
+  token_date              String?     @db.VarChar(15) // date-string
+  token_time              String?     @db.VarChar(10) // time-string
+  generate_qrcode         YesNo?      @default(no)
+  tamin_egtma3y_num       String?     @db.VarChar(100)
+  branche_company_id_fk   Int?
+  barcode_path            String?     @db.VarChar(200)
+  qrcode_path             String?     @db.VarChar(200)
+  year_vacation_num       Int?
+  remove_basma            YesNo       @default(no)
+  halet_kafala            HaletKafala @default(kafala)
+  remain_akd              Float?
+  remain_tby              Float?
+  remain_gwaz             Float?
+  remain_eqama            Float?
+  no3_emp                 No3Emp      @default(schools)
+  wazefa_type             WazefaType  @default(emp)
+  neqat_total             Int?
+  neqat_x1                Int?
+  neqat_x2                Int?
+  neqat_x3                Int?
+  neqat_x4                Int?
+  neqat_x5                Int?
+  neqat_x6                Int?
+  neqat_x7                Int?
+  neqat_t                 Int?
+  card_esdar_date         String?     @db.VarChar(50) // date-string
+  card_enhaa_date         String?     @db.VarChar(50) // date-string
+  age                     Int         @default(0)
+  birth_img               YesNo?
+  qualification_img       YesNo?
+  phesh_genai             YesNo?
+  military_service        YesNo?
+  e3fa_reason             String?     @db.VarChar(50)
+  person_img              YesNo?
+  rokhsa_mihani           YesNo?
+  date_ar                 String?     @db.VarChar(50) // date-string (Arabic)
+  date_s                  String?     @db.VarChar(50) // date-string (system)
+  shahadt_jaish           YesNo // NOT NULL no default (HAZARD)
+  tamin_rkm               Int // NOT NULL no default
+  khedma_year             Int // NOT NULL no default
+  tamin_mosama_wazefy     String?     @db.VarChar(50)
+  tamin_rateb             Decimal?    @db.Decimal(19, 2)
+  tamin_hesa_emp          Decimal?    @db.Decimal(19, 2)
+  tamin_hesa_oner         Decimal?    @db.Decimal(19, 2)
+  emp_code_gym            Int         @default(0) // gym member code
+
+  // ONE80 additions (not in legacy schema) — خبرات/مهارات/لغات + marital/national address
+  previous_experience String?  @db.Text
+  skills              String?  @db.Text
+  languages           String?  @db.Text
+  marital_status      Int?
+  national_address    String?  @db.VarChar(255)
+  basic_salary        Decimal? @db.Decimal(19, 2)
+  employee_target     Decimal? @db.Decimal(19, 2)
+  employee_commission Decimal? @db.Decimal(19, 2)
+
+  // Mobile-app account link (ONE80)
+  app_user_id Int?
+  app_user    api_users? @relation(fields: [app_user_id], references: [user_id], onDelete: SetNull, onUpdate: NoAction)
+
+  // Safe relations: dependents linked by employees.id (int = int).
+  emp_files           emp_files[]
+  hr_finance_employes hr_finance_employes[]
+  employees_branches  employees_branches[]
+  hr_emp_dwam         hr_emp_dwam[]
+  hr_emp_dwam_details hr_emp_dwam_details[]
+
+  @@index([app_user_id])
+  @@map("employees")
+}
+
+/// LEGACY/secondary employee roster (58 rows). Engine=MyISAM, utf8mb3. PK id (AI=59). Read-only.
+model tbl_employees {
+  id                     Int     @id @default(autoincrement())
+  emp_code               Int?
+  edara_id_fk            Int // -> hr_edarat_aqsam
+  qsm_id_fk              Int // -> section
+  employee               String  @db.VarChar(100)
+  card_num               String  @db.VarChar(50)
+  card                   YesNo   @default(yes)
+  card_esdar_date        String  @db.VarChar(20) // date-string
+  card_enhaa_date        String  @db.VarChar(20) // date-string
+  phone                  Int
+  direct_manager_fk      Int
+  birth_date             String  @db.VarChar(20) // date-string
+  age                    Int
+  gender                 Int
+  adress                 String  @db.VarChar(100)
+  nationality            Int
+  deyana                 Int
+  job_title              String  @db.VarChar(100)
+  employee_type          Int     @default(1)
+  date_ar                String  @db.VarChar(20) // date-string
+  date_s                 String  @db.VarChar(20) // date-string
+  personal_photo         String  @db.VarChar(100)
+  publisher              Int
+  type                   Int?
+  qsm_n                  String  @db.VarChar(100)
+  edara_n                String  @db.VarChar(100)
+  qualification_img      YesNo
+  employee_qualification String  @db.VarChar(100)
+  contract               String  @db.VarChar(100)
+  end_contract_date      String  @db.VarChar(20) // date-string
+  start_work_date        String  @db.VarChar(20) // date-string
+  khedma_year            Int
+  test_num_month         Int
+  end_test_date          String  @db.VarChar(20) // date-string
+  type_tamin             String  @db.VarChar(100)
+  markz_taklfa           String  @db.VarChar(200)
+  birth_img              YesNo   @default(yes)
+  phesh_genai            YesNo
+  ka3b_3ml               YesNo
+  shahadt_jaish          YesNo
+  military_service       YesNo
+  e3fa_reason            YesNo?
+  person_img             YesNo
+  rokhsa_mihani          YesNo
+  estkmal_nespa          Decimal @db.Decimal(10, 0)
+  warady_type            String  @db.VarChar(100)
+  warady_num             Int
+  tamin_rkm              Int
+  tamin_mosama_wazefy    String  @db.VarChar(100)
+  tamin_date             String  @db.VarChar(20) // date-string
+  tamin_rateb            Decimal @db.Decimal(10, 0)
+  tamin_hesa_emp         Decimal @db.Decimal(10, 0)
+  tamin_hesa_oner        Decimal @db.Decimal(10, 0)
+  khat_seir              String? @db.VarChar(100)
+  download_app           Int     @default(0)
+  users_signatures       String  @default("0") @db.VarChar(100)
+  app_users_signatures   String  @default("0") @db.VarChar(100)
+  latitude               Float?  @db.Double
+  longitude              Float?  @db.Double
+  token                  String? @db.VarChar(400)
+  token_date             String? @db.VarChar(20) // date-string
+  token_time             String? @db.VarChar(20) // time-string
+  mosma_wazefy_n         String? @db.VarChar(50)
+  direct_manager_code_fk Int?
+
+  @@map("tbl_employees")
+}
+
+/// Employee document attachments (119 rows). Engine=MyISAM, utf8mb3. PK id (AI=137).
+model emp_files {
+  id          Int     @id @default(autoincrement())
+  emp_id      Int? // -> employees.id (safe relation)
+  emp_code    String  @default("0") @db.VarChar(255) // FK-by-convention (varchar)
+  title       String  @db.VarChar(400)
+  emp_file    String  @db.Text // path
+  tanbih_fk   Int?    @db.TinyInt // alert flag
+  period      Int?    @db.TinyInt
+  have_date   Int     @default(0) @db.TinyInt // bool
+  from_date   String? @db.VarChar(15) // date-string
+  from_date_h String? @db.VarChar(15) // date-string Hijri
+  to_date     String? @db.VarChar(15) // date-string
+  to_date_h   String? @db.VarChar(15) // date-string Hijri
+
+  employee employees? @relation(fields: [emp_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([emp_id])
+  @@map("emp_files")
+}
+
+/// Employment contract terms (1 row). Engine=MyISAM, utf8mb3. PK id (AI=2).
+/// HAZARD: almost every column is varchar DEFAULT '0' even where numeric/FK.
+model contract_employe {
+  id                        Int     @id @default(autoincrement())
+  emp_code                  String  @default("0") @db.VarChar(255) // FK-by-convention (varchar)
+  num_days_in_month         String  @default("0") @db.VarChar(255)
+  hours_work                String  @default("0") @db.VarChar(255)
+  hour_value                String  @default("0") @db.VarChar(255)
+  work_period_id_fk         String  @default("0") @db.VarChar(255)
+  contract_nature           Int     @default(0)
+  job_type                  String  @default("0") @db.VarChar(255)
+  pay_method_id_fk          String  @default("0") @db.VarChar(255)
+  bank_id_fk                String  @default("0") @db.VarChar(255)
+  bank_code                 String  @default("255") @db.VarChar(255)
+  bank_account_num          String  @default("0") @db.VarChar(255)
+  year_vacation_num         String  @default("0") @db.VarChar(255)
+  year_vacation_period      String  @default("0") @db.VarChar(255)
+  casual_vacation_num       String  @default("0") @db.VarChar(255)
+  travel_ticket             String  @default("0") @db.VarChar(255)
+  travel_type_fk            String  @default("0") @db.VarChar(255)
+  travel_period             String  @default("0") @db.VarChar(255)
+  reward_end_work           Int     @default(0) @db.TinyInt // bool
+  vacation_previous_balance Float
+  vacation_start_ar         String  @db.VarChar(255) // date-string
+  vacation_start_m          String? @db.VarChar(15) // date-string Gregorian
+  vacation_start_h          String? @db.VarChar(15) // date-string Hijri
+  travel_type_name          String? @db.VarChar(30)
+
+  @@map("contract_employe")
+}
+
+/// DEPRECATED finance table (0 rows). Engine=MyISAM, utf8mb3. PK id (AI).
+
+/// LIVE per-employee allowances/deductions (93 rows). Engine=MyISAM, utf8mb3. PK id (AI=97).
+model hr_finance_employes {
+  id                  Int      @id @default(autoincrement())
+  emp_id              Int? // -> employees.id (safe relation)
+  emp_code            Int      @default(0) // FK-by-convention
+  method_to_count     Int      @default(1) @db.TinyInt
+  badl_discount_id_fk Int      @default(0) // -> all_defined_setting.defined_id
+  badl_code           Int?
+  value               Float    @default(0) @db.Double
+  badl_type           Int      @default(0) @db.TinyInt // 1=allowance / 2=deduction (by convention)
+  specific_period     String   @default("0") @db.VarChar(255)
+  date_from           String?  @db.VarChar(255) // date-string
+  date_to             String?  @db.VarChar(255) // date-string
+  insurance_affect    Int      @default(0) @db.TinyInt // bool
+  dalel_code          BigInt   @default(0)
+  dalel_name          String?  @db.VarChar(100)
+  having_all_value    Decimal? @db.Decimal(19, 2)
+  having_tamin_value  Decimal? @db.Decimal(19, 2)
+  discut_all_value    Decimal? @db.Decimal(19, 2)
+  publisher           Int?
+  publisher_name      String?  @db.VarChar(100)
+
+  employee employees? @relation(fields: [emp_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([emp_id])
+  @@map("hr_finance_employes")
+}
+
+/// Employee form field / lookup definitions (172 rows). Engine=MyISAM, utf8mb3. PK id_setting (AI=233).
+model employees_settings {
+  id_setting    Int     @id @default(autoincrement())
+  title_setting String  @db.VarChar(255)
+  have_branch   Int     @default(0)
+  type          Int
+  type_name     String  @db.VarChar(255)
+  form_id       Int     @default(0)
+  in_order      Int     @default(0)
+  color         String? @db.VarChar(10)
+
+  @@map("employees_settings")
+}
+
+/// Employee<->branch assignment history (33 rows). Engine=InnoDB, utf8mb3_unicode_ci. PK id (AI=39).
+model employees_branches {
+  id           Int     @id @default(autoincrement())
+  branch_id_fk Int? // -> tbl_branches.branch_id (FK-by-convention)
+  emp_id_fk    Int? // -> employees.id (safe relation)
+  date         String? @db.VarChar(100) // date-string
+  publisher    Int?
+
+  employee employees? @relation(fields: [emp_id_fk], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([emp_id_fk])
+  @@map("employees_branches")
+}
+
+/// Generic lookup: allowances/deductions/contract types/job roles (20 rows). Engine=MyISAM, utf8mb3. PK defined_id (AI=74).
+model all_defined_setting {
+  defined_id         Int    @id @default(autoincrement())
+  defined_title      String @db.VarChar(255)
+  defined_type       Int
+  defined_type_title String @db.VarChar(255) // e.g. allowances/deduction/type_contract/job_role
+  in_order           String @default("0") @db.VarChar(255) // numeric-as-string
+
+  @@map("all_defined_setting")
+}
+
+// =====================================================================================
+//  ORG STRUCTURE
+// =====================================================================================
+
+/// Departments (5 rows). Engine=MyISAM, utf8mb3. PK id (AI=7).
+model departments {
+  id            Int    @id @default(autoincrement())
+  main_dep_name String @db.VarChar(255)
+  main_dep_f_id String @db.VarChar(255) // parent id as string
+  sub_dep_name  String @db.VarChar(255)
+  detail        String @db.VarChar(255)
+  type          Int    @db.TinyInt
+  suspend       Int    @db.TinyInt // bool
+  date          String @db.VarChar(255) // date-string
+  date_s        String @db.VarChar(255) // date-string
+  publisher     String @db.VarChar(255)
+  deleted       Int    @default(1) @db.TinyInt // soft-delete (VERIFY polarity: 1 likely = active)
+
+  @@map("departments")
+}
+
+/// Job titles (41 rows). Engine=MyISAM, utf8mb3. PK id (AI=214).
+model department_jobs {
+  id         Int    @id @default(autoincrement())
+  name       String @db.VarChar(255)
+  from_id_fk Int    @default(0) // parent job/dept (self-ref FK-by-convention)
+  status     Int    @default(0)
+  in_order   String @default("0") @db.VarChar(255) // numeric-as-string
+  dep_code   Int?
+  edara_id   Int? // -> hr_edarat_aqsam / departments
+
+  @@map("department_jobs")
+}
+
+/// Dept<->job relation (10 rows). Engine=MyISAM, utf8mb3_unicode_ci. PK id (AI=11).
+model department_job_relations {
+  id          Int    @id @default(autoincrement())
+  edara_title String @db.VarChar(255)
+  edara_id_fk Int // -> hr_edarat_aqsam / departments
+
+  @@map("department_job_relations")
+}
+
+/// Departments (إدارات) & sections (أقسام) hierarchy with code ranges (12 rows). Engine=InnoDB, utf8mb3. PK id (AI=33).
+model hr_edarat_aqsam {
+  id         Int     @id @default(autoincrement())
+  title_id   Int
+  title_code Int?
+  title      String? @db.VarChar(100)
+  from_id_fk Int?    @default(0) // self-ref parent
+  trteeb     Int? // order
+  from_code  Int // code range start
+  to_code    Int // code range end
+
+  @@map("hr_edarat_aqsam")
+}
+
+// =====================================================================================
+//  BANKING
+// =====================================================================================
+
+/// Bank master list (19 rows). Engine=InnoDB, utf8mb3_unicode_ci. PK id (AI=20).
+model banks {
+  id        Int    @id @default(autoincrement())
+  bank_name String @db.VarChar(255)
+
+  @@map("banks")
+}
+
+/// Bank account-format settings (18 rows). Engine=MyISAM, utf8mb3. PK id (AI=20).
+model banks_settings {
+  id                 Int    @id @default(autoincrement())
+  title              String @db.VarChar(255)
+  account_num        String @db.VarChar(255)
+  ar_name            String @default("0") @db.VarChar(255)
+  en_name            String @default("0") @db.VarChar(255)
+  bank_code          String @default("0") @db.VarChar(255)
+  account_num_length String @default("0") @db.VarChar(255)
+  code               Int?
+
+  @@map("banks_settings")
+}
+
+/// Employee bank accounts current+past (179 rows). Engine=MyISAM, utf8mb3. PK id (AI=226).
+model bank_employes_details {
+  id                    Int     @id @default(autoincrement())
+  emp_code              Int     @default(0) // FK-by-convention -> employees.emp_code
+  bank_id_fk            Int     @default(0) // -> banks / banks_settings
+  bank_account_num      String  @default("0") @db.VarChar(255)
+  bank_code             String? @db.VarChar(10)
+  approved_for_sarf     Int     @default(0) @db.TinyInt // bool (approved for payout)
+  bank_id_fk_image      String? @default("0") @db.VarChar(700)
+  emp_bank_name         String? @db.VarChar(70)
+  past_bank_id_fk       Int?
+  past_bank_account_num String? @db.VarChar(200)
+  past_bank_id_fk_image String? @db.VarChar(200)
+  attachment            String? @db.VarChar(200)
+  past_attachment       String? @db.VarChar(200)
+
+  @@map("bank_employes_details")
+}
+
+// =====================================================================================
+//  ATTENDANCE / SHIFTS
+// =====================================================================================
+
+/// LIVE daily attendance punches (3160 rows). Engine=InnoDB, utf8mb4_unicode_ci. PK hodoor_id (AI=3234).
+model tbl_hdoor_emps {
+  hodoor_id               Int         @id @default(autoincrement())
+  member_code             Int? // -> employees.emp_code / emp_code_gym
+  member_id               Int?
+  action_date             String?     @db.VarChar(15) // date-string (Hijri)
+  action_date_s           String?     @db.VarChar(15) // date-string (Gregorian)
+  hdoor_time              String?     @db.VarChar(15) // time-string actual in
+  dwam_hdoor_time         String?     @db.VarChar(10) // time-string scheduled in
+  late_min                Float?
+  ensraf_time             String?     @db.VarChar(10) // time-string actual out
+  dwam_ensraf_time        String?     @db.VarChar(10) // time-string scheduled out
+  mobaker_min             Float? // early-leave minutes
+  hdoor_user_id           Int? // -> users.user_id (recorder)
+  ensraf_user_id          Int? // -> users.user_id (recorder)
+  ttype                   HdoorTtype?
+  action_time             String?     @db.VarChar(10) // time-string
+  num_min                 Float?
+  tasgel_type             TasgelType? @default(automatic)
+  hdoor_img_path          String?     @db.VarChar(500)
+  ensraf_img_path         String?     @db.VarChar(500)
+  hdoor_lat               String?     @db.VarChar(100)
+  hdoor_long              String?     @db.VarChar(100)
+  ensraf_lat              String?     @db.VarChar(100)
+  ensraf_long             String?     @db.VarChar(100)
+  second_hdoor_time       String?     @db.VarChar(10) // time-string
+  second_hdoor_user_id    Int?
+  second_dwam_hdoor_time  String?     @db.VarChar(10) // time-string
+  second_late_min         Float?
+  second_hdoor_img_path   String?     @db.VarChar(500)
+  second_hdoor_lat        String?     @db.VarChar(100)
+  second_hdoor_long       String?     @db.VarChar(100)
+  second_ensraf_time      String?     @db.VarChar(10) // time-string
+  second_ensraf_user_id   Int?
+  second_dwam_ensraf_time String?     @db.VarChar(10) // time-string
+  second_mobaker_min      Float?
+  second_ensraf_img_path  String?     @db.VarChar(500)
+  second_ensraf_lat       String?     @db.VarChar(100)
+  second_ensraf_long      String?     @db.VarChar(100)
+  for_month               Int?
+  for_year                Int?
+  mobker_hdor             Int?        @default(0)
+  ensraf_point            Int?
+  sheft_type              Int
+  branch_id_fk            Int // -> tbl_branches.branch_id
+  dwam_id_fk              Int // -> hr_emp_dwam.id
+
+  @@map("tbl_hdoor_emps")
+}
+
+/// Raw punch log, one row per scan (5936 rows). Engine=InnoDB, utf8mb4_unicode_ci. PK hodoor_id (AI=5937).
+model tbl_hdoor_emps_history {
+  hodoor_id         Int         @id @default(autoincrement())
+  member_code       Int? // -> employees.emp_code
+  member_id         Int?
+  action_date       String?     @db.VarChar(15) // date-string (Hijri)
+  action_date_s     String?     @db.VarChar(15) // date-string (Gregorian)
+  hdoor_ensraf_time String?     @db.VarChar(15) // time-string
+  dwam_hdoor_time   String?     @db.VarChar(10) // time-string
+  setting_time      String?     @db.VarChar(10) // time-string
+  ttype             HdoorTtype?
+  action_time       String?     @db.VarChar(10) // time-string
+  img_path          String?     @db.VarChar(500)
+  m_lat             String?     @db.VarChar(100)
+  m_long            String?     @db.VarChar(100)
+
+  @@map("tbl_hdoor_emps_history")
+}
+
+/// Shift time windows (39 rows). Engine=InnoDB, utf8mb3. PK id (AI=45).
+model tbl_hdodr_setting {
+  id                Int     @id @default(autoincrement())
+  hdoor_from_time   String? @db.VarChar(10) // time-string
+  hdoor_to_time     String? @db.VarChar(10) // time-string
+  hdoor_khasm_from  String? @db.VarChar(10) // time-string
+  ensraf_from_time  String? @db.VarChar(10) // time-string
+  ensraf_khasm_from String? @db.VarChar(10) // time-string
+  ensraf_to_time    String? @db.VarChar(10) // time-string
+  title             String? @db.VarChar(100)
+
+  @@map("tbl_hdodr_setting")
+}
+
+/// Attendance status toggles (4 rows). Engine=InnoDB, utf8mb4_0900_ai_ci. PK id (AI=5).
+model tbl_hdodr_status {
+  id      Int           @id @default(autoincrement())
+  title   String?       @db.VarChar(10)
+  active  YesNo         @default(no)
+  branche HdodrBranche?
+
+  @@map("tbl_hdodr_status")
+}
+
+/// Employee work-schedule assignment (54 rows). Engine=MyISAM, utf8mb3. PK id (AI=57).
+model hr_emp_dwam {
+  id           Int     @id @default(autoincrement())
+  emp_id       Int // -> employees.id (safe relation)
+  emp_code     String? @db.VarChar(255)
+  always_id_fk Int
+  period_id_fk Int
+  attend_time  String  @db.VarChar(255) // time-string
+  leave_time   String  @db.VarChar(255) // time-string
+  start_enter  String  @db.VarChar(255) // time-string
+  end_enter    String  @db.VarChar(255) // time-string
+  start_out    String  @db.VarChar(255) // time-string
+  end_out      String  @db.VarChar(255) // time-string
+  from_date    Int // epoch-ish int (pairs with from_date_ar)
+  from_date_ar String  @db.VarChar(255) // date-string (Arabic)
+  to_date      Int // epoch-ish int
+  to_date_ar   String  @db.VarChar(255) // date-string (Arabic)
+  saturday     Int     @default(0) // bool working-day flag
+  sunday       Int     @default(0) // bool
+  monday       Int     @default(0) // bool
+  tuesday      Int     @default(0) // bool
+  wednesday    Int     @default(0) // bool
+  thursday     Int     @default(0) // bool
+  friday       Int     @default(0) // bool
+
+  employee employees @relation(fields: [emp_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([emp_id])
+  @@map("hr_emp_dwam")
+}
+
+/// Device/period mapping per employee (54 rows). Engine=MyISAM, utf8mb3. PK id (AI=55).
+model hr_emp_dwam_details {
+  id            Int       @id @default(autoincrement())
+  emp_id        Int? // -> employees.id (safe relation)
+  emp_code      String    @default("0") @db.VarChar(255) // FK-by-convention (varchar)
+  num_in_device String    @db.VarChar(255) // fingerprint id
+  device_id_fk  String    @default("0") @db.VarChar(255)
+  period_id_fk  String    @default("0") @db.VarChar(255)
+  from_day      String    @default("0") @db.VarChar(255)
+  to_day        String    @default("0") @db.VarChar(255)
+  no3_dawam     No3Dawam?
+
+  employee employees? @relation(fields: [emp_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([emp_id])
+  @@map("hr_emp_dwam_details")
+}
+
+/// DEPRECATED attendance table (0 rows). Engine=MyISAM, utf8mb3. PK id (AI). emp_id is TEXT (CSV of ids).
+
+// =====================================================================================
+//  GYM
+// =====================================================================================
+
+/// Gym settings (3 rows). Engine=InnoDB, utf8mb4_0900_ai_ci. PK id (AI=6).
+model tbl_gym_setting {
+  id             Int            @id @default(autoincrement())
+  ttype          GymSettingType
+  for_user       Int
+  for_gym        Int
+  date_ar        String         @db.VarChar(20) // date-string (Arabic)
+  date_s         String         @db.VarChar(20) // date-string (system)
+  publisher      Int
+  publisher_name String         @db.VarChar(50)
+
+  @@map("tbl_gym_setting")
+}
+
+// =====================================================================================
+//  WAVE 2 MODULES (legacy tables + new config tables)
+// =====================================================================================
+
+model attendance_rules {
+  id         Int     @id @default(autoincrement())
+  key        String  @unique @db.VarChar(50) // late | early_leave | absence | overtime | weekly_rest | holidays | flexible_hours
+  enabled    Int     @default(1) @db.TinyInt
+  threshold  String? @db.VarChar(20)
+  grace_min  String? @db.VarChar(20)
+  multiplier String? @db.VarChar(20)
+
+  @@map("attendance_rules")
+}
+
+model attendance_channels {
+  id      Int     @id @default(autoincrement())
+  key     String  @unique @db.VarChar(20) // device | app | gps | qr | nfc | face
+  enabled Int     @default(1) @db.TinyInt
+  label   String? @db.VarChar(50)
+
+  @@map("attendance_channels")
+}
+
+// =====================================================================================
+//  WAVE 3 — remaining PHP features
+// =====================================================================================
+
+// =====================================================================================
+//  NEW MODULES (parity wave) — areas not previously migrated. Faithful to noamanycenter_hr.sql.
+//  enum columns modeled as String (legacy stores the literal lowercase value); flags kept as Int.
+// =====================================================================================
+
+/// Agents directory (مندوبون). Engine=InnoDB, utf8mb3. PK agent_id (AI).
+
+/// Mobile/app end-users (api_users). Engine=MyISAM, latin1. PK user_id (AI).
+model api_users {
+  user_id    Int     @id @default(autoincrement())
+  user_name  String? @db.VarChar(100)
+  user_phone String? @db.VarChar(20)
+  user_email String? @db.VarChar(70)
+  user_city  String? @db.VarChar(100)
+  user_pass  String? @db.VarChar(500)
+  status     Int     @default(0) // tinyint: 0=inactive,1=active
+  rand_key   Int?
+  m_image    String? @db.Text
+
+  employees employees[]
+
+  @@map("api_users")
+}
+
+/// Hierarchical area settings (country/city/region). Engine=MyISAM, utf8mb3. PK main_id (AI).
+model conf_area_setting {
+  main_id    Int       @id @default(autoincrement())
+  name       String?   @db.VarChar(100)
+  type       String?   @db.VarChar(10) // enum('country','city','region')
+  from_id_fk Int? // self-ref parent (FK-by-convention)
+  created    DateTime  @default(now()) @db.DateTime(0)
+  updated    DateTime? @db.DateTime(0)
+
+  @@map("conf_area_setting")
+}
+
+/// Internal memo/circular messages (التعميمات/المراسلات). Engine=InnoDB, utf8mb3. PK id (AI).
+
+/// Recipients of an internal memo. Engine=InnoDB, utf8mb3. PK id (AI).
+
+/// Attachments on an internal memo. Engine=InnoDB, utf8mb3. PK id (AI).
+
+/// Personal (1:1) internal messages. Engine=InnoDB, utf8mb3. PK id (AI).
+
+/// Recipients of a personal message. Engine=InnoDB, latin1. PK id (AI).
+
+/// SMS/customer message log. Engine=InnoDB, utf8mb3_unicode_ci. PK msg_id (AI).
+
+/// Daily reports (التقارير اليومية). Engine=MyISAM, utf8mb3. PK id (AI).
+
+/// Daily-activity report header (تقرير يومي). Engine=MyISAM, utf8mb3. PK id (AI).
+
+/// Daily-activity report item catalog (بنود). Engine=MyISAM, utf8mb3. PK id (AI).
+
+/// Daily-activity report line values. Engine=InnoDB, utf8mb3. PK id (AI).
+
+/// Initiatives (المبادرات). Engine=MyISAM, utf8mb3. PK id (AI).
+
+/// Activities / events (الأنشطة). Engine=InnoDB, utf8mb4. PK id (AI).
+
+/// Activity image gallery. Engine=InnoDB, utf8mb4. PK id (AI).
+
+/// Legal / regulation files (اللوائح). Engine=InnoDB, utf8mb4. PK id (AI).
+
+/// Per-employee acknowledgement of a legal file. Engine=InnoDB, utf8mb4. PK id (AI).
+
+/// Tasks / assignments (المهام/المراسلات). Engine=MyISAM, utf8mb4. PK id (AI).
+
+/// Task line items (مكلّفون). Engine=InnoDB, utf8mb4. PK id (AI).
+
+/// GPS location visits log (مواقع الزيارات). Engine=MyISAM, utf8mb3. PK id (AI).
+
+/// Employee site-visit punches (زيارات الموظفين). Engine=InnoDB, utf8mb3. PK id (AI).
+
+// =====================================================================================
+//  CLUB MANAGEMENT (gym members, membership types, attendance)
+// =====================================================================================
+
+enum ClubGender {
+  male
+  female
+}
+
+enum ClubAttendanceStatus {
+  checked_in
+  checked_out
+}
+
+enum ClubSubStatus {
+  active
+  expired
+  upcoming
+  frozen
+}
+
+enum ClubPaymentMethod {
+  cash
+  card
+  bank
+  online
+  visa
+  transfer
+  wallet
+}
+
+enum ClubRefundStatus {
+  pending
+  completed
+  cancelled
+}
+
+/// Membership type catalog (price + duration). Old: MembershipTypes.
+model club_membership_types {
+  id            Int            @id @default(autoincrement())
+  name          String         @db.VarChar(150)
+  description   String?        @db.Text
+  price         Decimal        @db.Decimal(10, 2)
+  duration_days Int
+  is_active     Boolean        @default(true)
+  created_at    DateTime       @default(now())
+  updated_at    DateTime       @updatedAt
+  members       club_members[]
+
+  @@map("club_membership_types")
+}
+
+/// Gym member. Old: Members.
+model club_members {
+  id                  Int                               @id @default(autoincrement())
+  member_code         String                            @unique @db.VarChar(30)
+  name                String                            @db.VarChar(200)
+  phone               String?                           @db.VarChar(20)
+  email               String?                           @db.VarChar(150)
+  gender              ClubGender
+  card_number         String?                           @db.VarChar(30)
+  date_of_birth       String?                           @db.VarChar(10)
+  address             String?                           @db.Text
+  trainer_id          Int?
+  sales_staff_id      Int?
+  source_id           Int?
+  emergency_name      String?                           @db.VarChar(150)
+  emergency_phone     String?                           @db.VarChar(30)
+  emergency_relation  String?                           @db.VarChar(80)
+  marital_status      String?                           @db.VarChar(20)
+  job_title           String?                           @db.VarChar(120)
+  profile_picture     String?                           @db.VarChar(255)
+  branch_id           Int
+  membership_type_id  Int?
+  start_date          String?                           @db.VarChar(10)
+  end_date            String?                           @db.VarChar(10)
+  notes               String?                           @db.Text
+  is_active           Boolean                           @default(true)
+  sales_id            Int?
+  employee_id         Int?
+  guardian_name       String?                           @db.VarChar(200)
+  guardian_phone      String?                           @db.VarChar(20)
+  app_user_id         Int?
+  is_deleted          Boolean                           @default(false)
+  created_by          Int?
+  created_at          DateTime                          @default(now())
+  updated_at          DateTime                          @updatedAt
+  membership_type     club_membership_types?            @relation(fields: [membership_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  attendances         club_attendance[]
+  subscriptions       club_subscriptions[]
+  receipts            club_receipts[]
+  refunds             club_subscription_refunds[]
+  transfers           club_subscription_transfers[]
+  class_bookings      club_class_bookings[]
+  points_transactions club_member_points_transactions[]
+
+  @@unique([phone], map: "uq_club_member_phone")
+  @@index([branch_id])
+  @@index([membership_type_id])
+  @@index([card_number])
+  @@index([name])
+  @@index([phone])
+  @@index([app_user_id])
+  @@index([branch_id, is_active, is_deleted])
+  @@map("club_members")
+}
+
+/// Member attendance / check-in. Old: MemberAttendances.
+model club_attendance {
+  id              Int                  @id @default(autoincrement())
+  member_id       Int
+  member_code     String               @db.VarChar(30)
+  member_name     String               @db.VarChar(200)
+  branch_id       Int
+  check_in_time   DateTime             @default(now())
+  check_out_time  DateTime?
+  attendance_date String               @db.VarChar(10)
+  status          ClubAttendanceStatus @default(checked_in)
+  duration        Int?
+  notes           String?              @db.Text
+  created_by      Int?
+  created_at      DateTime             @default(now())
+  member          club_members         @relation(fields: [member_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([member_id])
+  @@index([branch_id])
+  @@index([attendance_date])
+  @@index([status])
+  @@index([member_code])
+  @@index([attendance_date, check_in_time])
+  @@map("club_attendance")
+}
+
+model club_subscription_types {
+  id                           Int                               @id @default(autoincrement())
+  name                         String                            @db.VarChar(150)
+  branch_id                    Int?
+  apply_to_all_branches        Boolean                           @default(false)
+  price                        Decimal                           @db.Decimal(10, 2)
+  days                         Int
+  is_part_of_target            Boolean                           @default(false)
+  invitations_count            Int?
+  inbody_count                 Int?
+  is_special_offer             Boolean                           @default(false)
+  is_for_students              Boolean                           @default(false)
+  show_in_app                  Boolean                           @default(false)
+  notify_customers             Boolean                           @default(false)
+  notify_on_expiry             Boolean                           @default(false)
+  wallet_points                Int?
+  offer_validity               String?                           @db.VarChar(10)
+  is_linked_to_sessions        Boolean                           @default(false)
+  sessions_count               Int?
+  allow_multiple_daily_entries Boolean                           @default(false)
+  is_linked_to_freeze          Boolean                           @default(false)
+  /// Max number of times this package may be frozen (historical column name: freeze_days).
+  freeze_days                  Int?
+  includes_spa                 Boolean                           @default(false)
+  spa_count                    Int?
+  name_ar                      String?                           @db.VarChar(150)
+  name_en                      String?                           @db.VarChar(150)
+  package_category             String                            @default("regular") @db.VarChar(20)
+  package_type                 String?                           @db.VarChar(100)
+  duration_value               Int?
+  duration_type                String                            @default("days") @db.VarChar(10)
+  valid_upgrade_duration       Int?
+  attendance_count             Int?
+  min_price                    Decimal?                          @db.Decimal(10, 2)
+  min_freeze                   Int?
+  max_classes_per_day          Int?
+  availability_from            String?                           @db.VarChar(10)
+  availability_to              String?                           @db.VarChar(10)
+  access_area_ids              Json?
+  income_type                  String?                           @db.VarChar(100)
+  description                  String?                           @db.Text
+  benefits                     Json?
+  week_planner                 Json?
+  is_active                    Boolean                           @default(true)
+  created_at                   DateTime                          @default(now())
+  updated_at                   DateTime                          @updatedAt
+  subscriptions                club_subscriptions[]
+  branches                     club_subscription_type_branches[]
+
+  @@map("club_subscription_types")
+}
+
+model club_subscription_type_branches {
+  id                   Int                     @id @default(autoincrement())
+  subscription_type_id Int
+  branch_id            Int
+  type                 club_subscription_types @relation(fields: [subscription_type_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([subscription_type_id, branch_id], map: "uq_sub_type_branch")
+  @@index([branch_id])
+  @@map("club_subscription_type_branches")
+}
+
+/// Singleton gym access policies (row id = 1).
+model club_gym_policies {
+  id                                       Int      @id @default(1)
+  allow_checkin_with_outstanding           Boolean  @default(false)
+  outstanding_alert_enabled                Boolean  @default(true)
+  outstanding_alert_after_subscription_pct Int      @default(50)
+  allow_refunds                            Boolean  @default(false)
+  updated_at                               DateTime @updatedAt
+  updated_by                               Int?
+
+  @@map("club_gym_policies")
+}
+
+model club_subscriptions {
+  id                           Int                               @id @default(autoincrement())
+  subscription_number          String                            @unique @db.VarChar(30)
+  registration_date            String                            @db.VarChar(10)
+  branch_id                    Int
+  member_id                    Int?
+  customer_name                String?                           @db.VarChar(200)
+  subscription_type_id         Int?
+  subscription_type            String?                           @db.VarChar(150)
+  subscription_start_date      String                            @db.VarChar(10)
+  subscription_end_date        String                            @db.VarChar(10)
+  subscription_value           Decimal                           @db.Decimal(10, 2)
+  discount_enabled             Boolean                           @default(false)
+  discount_value               Decimal                           @default(0) @db.Decimal(10, 2)
+  paid_amount                  Decimal                           @default(0) @db.Decimal(10, 2)
+  remaining_amount             Decimal                           @default(0) @db.Decimal(10, 2)
+  gender                       ClubGender?
+  employee_id                  Int?
+  sales_id                     Int?
+  payment_method               ClubPaymentMethod?
+  receipt_number               String?                           @db.VarChar(30)
+  customer_source_id           Int?
+  guardian_name                String?                           @db.VarChar(200)
+  guardian_phone               String?                           @db.VarChar(20)
+  status                       ClubSubStatus                     @default(active)
+  is_special                   Boolean                           @default(false)
+  is_linked_to_sessions        Boolean                           @default(false)
+  sessions_count               Int?
+  sessions_used                Int                               @default(0)
+  allow_multiple_daily_entries Boolean                           @default(false)
+  is_time_based                Boolean                           @default(false)
+  time_from                    String?                           @db.VarChar(8)
+  time_to                      String?                           @db.VarChar(8)
+  /// Per-member snapshot/override of the selected package benefits.
+  benefits                     Json?
+  free_benefit_notes           String?                           @db.Text
+  created_by                   Int?
+  created_at                   DateTime                          @default(now())
+  updated_at                   DateTime                          @updatedAt
+  member                       club_members?                     @relation(fields: [member_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  type                         club_subscription_types?          @relation(fields: [subscription_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  receipts                     club_receipts[]
+  refunds                      club_subscription_refunds[]
+  transfers                    club_subscription_transfers[]
+  freezes                      club_subscription_freezes[]
+  points_transactions          club_member_points_transactions[]
+
+  @@index([member_id])
+  @@index([branch_id])
+  @@index([status])
+  @@index([subscription_end_date])
+  @@index([branch_id, status])
+  @@map("club_subscriptions")
+}
+
+/// Immutable member loyalty-points ledger. The balance is the sum of `points`,
+/// so every earn/redeem/adjustment remains auditable.
+model club_member_points_transactions {
+  id               Int                 @id @default(autoincrement())
+  member_id        Int
+  subscription_id  Int?
+  points           Int
+  transaction_type String              @db.VarChar(20)
+  source           String              @db.VarChar(50)
+  event_key        String              @unique @db.VarChar(190)
+  description      String?             @db.VarChar(500)
+  created_at       DateTime            @default(now())
+  member           club_members        @relation(fields: [member_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  subscription     club_subscriptions? @relation(fields: [subscription_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
+
+  @@index([member_id, created_at])
+  @@index([subscription_id])
+  @@map("club_member_points_transactions")
+}
+
+model club_receipts {
+  id              Int                 @id @default(autoincrement())
+  receipt_number  String              @unique @db.VarChar(30)
+  subscription_id Int?
+  member_id       Int?
+  member_name     String              @db.VarChar(200)
+  amount          Decimal             @db.Decimal(10, 2)
+  type            String?             @db.VarChar(50)
+  payment_method  ClubPaymentMethod?
+  receipt_date    String              @db.VarChar(10)
+  status          String              @default("مدفوعة") @db.VarChar(30)
+  description     String?             @db.Text
+  created_at      DateTime            @default(now())
+  updated_at      DateTime            @updatedAt
+  subscription    club_subscriptions? @relation(fields: [subscription_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  member          club_members?       @relation(fields: [member_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([subscription_id])
+  @@index([member_id])
+  @@index([receipt_date])
+  @@map("club_receipts")
+}
+
+model club_customer_sources {
+  id         Int      @id @default(autoincrement())
+  name       String   @db.VarChar(120)
+  is_active  Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("club_customer_sources")
+}
+
+model club_subscription_refunds {
+  id                  Int                @id @default(autoincrement())
+  subscription_id     Int
+  member_id           Int?
+  customer_name       String?            @db.VarChar(200)
+  subscription_type   String?            @db.VarChar(150)
+  original_start_date String             @db.VarChar(10)
+  original_end_date   String             @db.VarChar(10)
+  stop_date           String             @db.VarChar(10)
+  remaining_days      Int
+  original_value      Decimal            @db.Decimal(10, 2)
+  daily_rate          Decimal            @db.Decimal(10, 4)
+  refund_amount       Decimal            @db.Decimal(10, 2)
+  invoice_number      String             @unique @db.VarChar(30)
+  refund_date         String             @db.VarChar(10)
+  reason              String?            @db.Text
+  notes               String?            @db.Text
+  status              ClubRefundStatus   @default(pending)
+  branch_id           Int?
+  created_by          Int?
+  created_at          DateTime           @default(now())
+  subscription        club_subscriptions @relation(fields: [subscription_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  member              club_members?      @relation(fields: [member_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([subscription_id])
+  @@index([member_id])
+  @@index([status])
+  @@map("club_subscription_refunds")
+}
+
+model club_subscription_freezes {
+  id                Int                @id @default(autoincrement())
+  subscription_id   Int
+  freeze_start_date String             @db.VarChar(10)
+  /// Planned end (freeze_start + planned_days); actual end set on unfreeze.
+  freeze_end_date   String?            @db.VarChar(10)
+  planned_days      Int
+  actual_days       Int?
+  /// Subscription end date before the freeze, restored+extended on unfreeze.
+  original_end_date String             @db.VarChar(10)
+  reason            String?            @db.Text
+  is_active         Boolean            @default(true)
+  branch_id         Int?
+  created_by        Int?
+  created_at        DateTime           @default(now())
+  updated_at        DateTime           @updatedAt
+  subscription      club_subscriptions @relation(fields: [subscription_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([subscription_id])
+  @@index([is_active])
+  @@map("club_subscription_freezes")
+}
+
+model club_subscription_transfers {
+  id                     Int                @id @default(autoincrement())
+  subscription_id        Int
+  member_id              Int?
+  customer_name          String?            @db.VarChar(200)
+  from_subscription_type String?            @db.VarChar(150)
+  to_subscription_type   String?            @db.VarChar(150)
+  from_start_date        String?            @db.VarChar(10)
+  from_end_date          String?            @db.VarChar(10)
+  to_start_date          String?            @db.VarChar(10)
+  to_end_date            String?            @db.VarChar(10)
+  from_value             Decimal?           @db.Decimal(10, 2)
+  to_value               Decimal?           @db.Decimal(10, 2)
+  transfer_date          String             @db.VarChar(10)
+  reason                 String?            @db.Text
+  branch_id              Int?
+  created_by             Int?
+  created_at             DateTime           @default(now())
+  subscription           club_subscriptions @relation(fields: [subscription_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  member                 club_members?      @relation(fields: [member_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([subscription_id])
+  @@index([member_id])
+  @@map("club_subscription_transfers")
+}
+
+// =====================================================================================
+//  CLUB FITNESS — training, scheduling, trainers, facilities, SPA, InBody
+// =====================================================================================
+
+enum ClubFitnessClassStatus {
+  scheduled
+  ongoing
+  completed
+  cancelled
+}
+
+enum ClubFitnessEnrollmentStatus {
+  registered
+  attended
+  absent
+  cancelled
+}
+
+enum ClubFitnessHallStatus {
+  available
+  maintenance
+  unavailable
+}
+
+enum ClubFitnessBookingStatus {
+  pending
+  confirmed
+  active
+  completed
+  cancelled
+}
+
+enum ClubFitnessDifficulty {
+  easy
+  medium
+  hard
+}
+
+enum ClubFitnessPaymentStatus {
+  unpaid
+  paid
+  partial
+}
+
+model club_trainers {
+  id                Int                            @id @default(autoincrement())
+  employee_id       Int?
+  name              String                         @db.VarChar(200)
+  email             String?                        @db.VarChar(150)
+  phone             String?                        @db.VarChar(20)
+  specialization    String?                        @db.VarChar(200)
+  experience        String?                        @db.VarChar(100)
+  bio               String?                        @db.Text
+  image_url         String?                        @db.VarChar(255)
+  rating_avg        Decimal                        @default(0) @db.Decimal(3, 2)
+  is_active         Boolean                        @default(true)
+  is_deleted        Boolean                        @default(false)
+  created_at        DateTime                       @default(now())
+  updated_at        DateTime                       @updatedAt
+  classes           club_classes[]
+  monthly_schedules club_class_monthly_schedules[]
+
+  @@index([employee_id])
+  @@map("club_trainers")
+}
+
+model club_classes {
+  id           Int                      @id @default(autoincrement())
+  class_name   String                   @db.VarChar(200)
+  class_type   String                   @default("class") @db.VarChar(50) // class | zumba | aerobics | ... (FIT90 filter)
+  description  String?                  @db.Text
+  trainer_id   Int
+  branch_id    Int
+  hall_id      Int?
+  class_date   String                   @db.VarChar(10)
+  start_time   String                   @db.VarChar(8)
+  end_time     String                   @db.VarChar(8)
+  max_capacity Int                      @default(10)
+  price        Decimal                  @default(0) @db.Decimal(10, 2)
+  status       ClubFitnessClassStatus   @default(scheduled)
+  notes        String?                  @db.Text
+  is_active    Boolean                  @default(true)
+  is_deleted   Boolean                  @default(false)
+  created_at   DateTime                 @default(now())
+  updated_at   DateTime                 @updatedAt
+  trainer      club_trainers            @relation(fields: [trainer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  enrollments  club_class_enrollments[]
+  waitlist     club_class_waitlist[]
+
+  @@index([trainer_id])
+  @@index([branch_id])
+  @@index([class_date])
+  @@map("club_classes")
+}
+
+model club_class_enrollments {
+  id                Int                         @id @default(autoincrement())
+  class_id          Int
+  member_id         Int
+  enrollment_date   String                      @db.VarChar(10)
+  attendance_status ClubFitnessEnrollmentStatus @default(registered)
+  attendance_time   String?                     @db.VarChar(8)
+  notes             String?                     @db.Text
+  created_at        DateTime                    @default(now())
+  updated_at        DateTime                    @updatedAt
+  class             club_classes                @relation(fields: [class_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([class_id, member_id])
+  @@index([member_id])
+  @@map("club_class_enrollments")
+}
+
+model club_class_waitlist {
+  id         Int          @id @default(autoincrement())
+  class_id   Int
+  member_id  Int
+  position   Int          @default(0)
+  status     String       @default("waiting") @db.VarChar(20)
+  notes      String?      @db.Text
+  created_at DateTime     @default(now())
+  updated_at DateTime     @updatedAt
+  class      club_classes @relation(fields: [class_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([class_id, member_id])
+  @@index([class_id, status])
+  @@map("club_class_waitlist")
+}
+
+model club_inbody_measurements {
+  id               Int      @id @default(autoincrement())
+  member_id        Int
+  measurement_date String   @db.VarChar(10)
+  staff_name       String?  @db.VarChar(150)
+  file_url         String?  @db.VarChar(255)
+  weight           Decimal? @db.Decimal(6, 2)
+  body_fat         Decimal? @db.Decimal(5, 2)
+  muscle_mass      Decimal? @db.Decimal(6, 2)
+  bmi              Decimal? @db.Decimal(5, 2)
+  notes            String?  @db.Text
+  nutrition_plan   Json?
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  @@index([member_id])
+  @@map("club_inbody_measurements")
+}
+
+model club_spa_services {
+  id           Int                 @id @default(autoincrement())
+  name         String              @db.VarChar(200)
+  description  String?             @db.Text
+  duration     Int                 @default(60)
+  price        Decimal             @db.Decimal(10, 2)
+  service_kind String              @default("spa") @db.VarChar(20) // spa | additional (حجامة/مساج)
+  branch_id    Int?
+  is_active    Boolean             @default(true)
+  created_at   DateTime            @default(now())
+  updated_at   DateTime            @updatedAt
+  bookings     club_spa_bookings[]
+  invoices     club_spa_invoices[]
+
+  @@map("club_spa_services")
+}
+
+model club_spa_bookings {
+  id             Int                      @id @default(autoincrement())
+  booking_number String                   @unique @db.VarChar(30)
+  member_id      Int?
+  customer_name  String?                  @db.VarChar(200)
+  customer_phone String?                  @db.VarChar(20)
+  service_id     Int
+  branch_id      Int
+  booking_date   String                   @db.VarChar(10)
+  booking_time   String                   @db.VarChar(8)
+  duration       Int
+  price          Decimal                  @db.Decimal(10, 2)
+  status         ClubFitnessBookingStatus @default(pending)
+  payment_status ClubFitnessPaymentStatus @default(unpaid)
+  notes          String?                  @db.Text
+  is_active      Boolean                  @default(true)
+  created_at     DateTime                 @default(now())
+  updated_at     DateTime                 @updatedAt
+  service        club_spa_services        @relation(fields: [service_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([service_id])
+  @@index([booking_date])
+  @@map("club_spa_bookings")
+}
+
+model club_spa_invoices {
+  id             Int               @id @default(autoincrement())
+  invoice_number String            @unique @db.VarChar(30)
+  member_id      Int
+  service_id     Int
+  branch_id      Int
+  quantity       Int               @default(1)
+  unit_price     Decimal           @db.Decimal(10, 2)
+  total_amount   Decimal           @db.Decimal(10, 2)
+  invoice_date   String            @db.VarChar(10)
+  status         String            @default("paid") @db.VarChar(30)
+  is_active      Boolean           @default(true)
+  created_at     DateTime          @default(now())
+  updated_at     DateTime          @updatedAt
+  service        club_spa_services @relation(fields: [service_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([member_id])
+  @@map("club_spa_invoices")
+}
+
+model club_inbody_invoices {
+  id             Int      @id @default(autoincrement())
+  invoice_number String   @unique @db.VarChar(30)
+  is_member      Boolean  @default(true)
+  member_id      Int?
+  customer_name  String?  @db.VarChar(200)
+  service_id     Int?
+  branch_id      Int
+  unit_price     Decimal  @db.Decimal(10, 2)
+  total_amount   Decimal  @db.Decimal(10, 2)
+  invoice_date   String   @db.VarChar(10)
+  invoice_time   String?  @db.VarChar(8)
+  status         String   @default("paid") @db.VarChar(30)
+  is_active      Boolean  @default(true)
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  @@index([member_id])
+  @@map("club_inbody_invoices")
+}
+
+// =====================================================================================
+//  INVENTORY / WAREHOUSES (gym-sales — إدارة المخازن)
+// =====================================================================================
+
+enum InvItemStatus {
+  active
+  inactive
+}
+
+enum WarehouseType {
+  main
+  sub
+}
+
+enum StockOperation {
+  add
+  subtract
+  set
+}
+
+enum SparePartCondition {
+  new
+  used
+  refurbished
+}
+
+enum MovementDirection {
+  in
+  out
+}
+
+enum InventoryTxnType {
+  receipt
+  issue
+  transfer
+  count
+  damage
+  purchase_return
+  sales_return
+  adjustment
+}
+
+enum InventoryTxnStatus {
+  draft
+  approved
+  rejected
+}
+
+enum SalesPaymentMethod {
+  cash
+  card
+  wallet
+  transfer
+  mixed
+}
+
+enum QuickSaleStatus {
+  completed
+  refunded
+  cancelled
+}
+
+enum ShiftSessionStatus {
+  open
+  closed
+  auto_closed
+}
+
+enum SalesBookingStatus {
+  pending
+  confirmed
+  in_progress
+  completed
+  cancelled
+  no_show
+}
+
+// =====================================================================================
+//  POS ADMIN — devices, payment methods, templates, reports, notifications, settings
+// =====================================================================================
+
+enum PosDeviceType {
+  desktop
+  tablet
+  mobile
+  terminal
+}
+
+enum PosPrinterType {
+  thermal
+  receipt
+  laser
+  inkjet
+}
+
+enum PosInvoiceTemplateType {
+  simple
+  detailed
+  thermal
+  electronic
+}
+
+enum PosReportType {
+  sales
+  inventory
+  financial
+  operational
+  customer
+  product
+  employee
+}
+
+enum PosReportFrequency {
+  daily
+  weekly
+  monthly
+  quarterly
+  yearly
+  on_demand
+}
+
+enum PosReportFormat {
+  pdf
+  excel
+  csv
+  html
+}
+
+enum PosNotificationType {
+  transaction
+  inventory
+  system
+  security
+  payment
+  user
+}
+
+enum PosNotificationPriority {
+  low
+  normal
+  high
+  urgent
+}
+
+enum PosSettingType {
+  string
+  number
+  boolean
+  json
+  array
+}
+
+// =====================================================================================
+//  ENTERPRISE RBAC (additive — coexists with legacy pages/permissions, which are untouched)
+//  Tri-state role matrix (Inherit/Allow/Deny) + inheritance + user exceptions + data scopes.
+//  Tables are applied to the DB via prisma/sql/rbac.sql; Prisma is used to GENERATE only.
+// =====================================================================================
+
+enum RbacResourceType {
+  module
+  group
+  page
+}
+
+enum RbacEffect {
+  allow
+  deny
+}
+
+enum RbacDataScope {
+  own
+  team
+  branch
+  department
+  global
+}
+
+/// Permission actions (matrix columns). `key` is the stable identifier used everywhere.
+model rbac_actions {
+  id         Int     @id @default(autoincrement())
+  key        String  @unique @db.VarChar(40) // view/create/update/delete/approve/reject/export/print/audit/configure/execute/manage/use
+  label_ar   String  @db.VarChar(80)
+  label_en   String  @db.VarChar(80)
+  sensitive  Boolean @default(false)
+  sort_order Int     @default(0)
+
+  resource_actions rbac_resource_actions[]
+  role_permissions rbac_role_permissions[]
+  exceptions       rbac_user_exceptions[]
+
+  @@map("rbac_actions")
+}
+
+/// Resource tree (module -> group -> page). Single source of truth for permissionable nodes.
+model rbac_resources {
+  id         Int              @id @default(autoincrement())
+  key        String           @unique @db.VarChar(120) // stable, e.g. "employees.list"
+  parent_id  Int?
+  type       RbacResourceType
+  name_ar    String           @db.VarChar(160)
+  name_en    String?          @db.VarChar(160)
+  route      String?          @db.VarChar(200) // new React route, e.g. "/employees"
+  icon       String?          @db.VarChar(80)
+  sort_order Int              @default(0)
+  is_active  Boolean          @default(true)
+
+  parent   rbac_resources?  @relation("rbac_resource_tree", fields: [parent_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  children rbac_resources[] @relation("rbac_resource_tree")
+
+  resource_actions rbac_resource_actions[]
+  role_permissions rbac_role_permissions[]
+  exceptions       rbac_user_exceptions[]
+  role_scopes      rbac_role_scopes[]
+
+  @@index([parent_id])
+  @@map("rbac_resources")
+}
+
+/// Which actions are applicable on a resource (matrix shows a dash where absent).
+model rbac_resource_actions {
+  resource_id Int
+  action_id   Int
+
+  resource rbac_resources @relation(fields: [resource_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  action   rbac_actions   @relation(fields: [action_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@id([resource_id, action_id])
+  @@index([action_id])
+  @@map("rbac_resource_actions")
+}
+
+/// Roles. super_admin (is_super_admin) bypasses all checks; is_system can't be deleted.
+model rbac_roles {
+  id             Int      @id @default(autoincrement())
+  key            String   @unique @db.VarChar(60)
+  name_ar        String   @db.VarChar(120)
+  name_en        String?  @db.VarChar(120)
+  description    String?  @db.VarChar(255)
+  is_system      Boolean  @default(false)
+  is_super_admin Boolean  @default(false)
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  permissions rbac_role_permissions[]
+  user_roles  rbac_user_roles[]
+  scopes      rbac_role_scopes[]
+
+  @@map("rbac_roles")
+}
+
+/// Stored tri-state cells. Only Allow/Deny are stored; Inherit = no row.
+model rbac_role_permissions {
+  id          Int        @id @default(autoincrement())
+  role_id     Int
+  resource_id Int
+  action_id   Int
+  effect      RbacEffect
+
+  role     rbac_roles     @relation(fields: [role_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  resource rbac_resources @relation(fields: [resource_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  action   rbac_actions   @relation(fields: [action_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([role_id, resource_id, action_id])
+  @@index([role_id])
+  @@index([resource_id])
+  @@index([action_id])
+  @@map("rbac_role_permissions")
+}
+
+/// Role assignment (a user may hold many roles; optional expiry).
+model rbac_user_roles {
+  id         Int       @id @default(autoincrement())
+  user_id    Int
+  role_id    Int
+  expires_at DateTime?
+  created_at DateTime  @default(now())
+  created_by Int?
+
+  role rbac_roles @relation(fields: [role_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([user_id, role_id])
+  @@index([user_id])
+  @@index([role_id])
+  @@map("rbac_user_roles")
+}
+
+/// Per-user surgical overrides on an exact resource+action. Highest priority; deny wins.
+model rbac_user_exceptions {
+  id          Int        @id @default(autoincrement())
+  user_id     Int
+  resource_id Int
+  action_id   Int
+  effect      RbacEffect
+  expires_at  DateTime?
+  reason      String?    @db.VarChar(255)
+  created_at  DateTime   @default(now())
+  created_by  Int?
+
+  resource rbac_resources @relation(fields: [resource_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  action   rbac_actions   @relation(fields: [action_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([user_id, resource_id, action_id])
+  @@index([user_id])
+  @@map("rbac_user_exceptions")
+}
+
+/// Optional data-scope per role+resource (does NOT inherit; broadest wins across roles).
+model rbac_role_scopes {
+  id          Int           @id @default(autoincrement())
+  role_id     Int
+  resource_id Int
+  scope       RbacDataScope
+
+  role     rbac_roles     @relation(fields: [role_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  resource rbac_resources @relation(fields: [resource_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([role_id, resource_id])
+  @@index([role_id])
+  @@map("rbac_role_scopes")
+}
+
+/// Audit trail for all RBAC administrative changes.
+model rbac_audit_log {
+  id            Int      @id @default(autoincrement())
+  actor_user_id Int?
+  action        String   @db.VarChar(60) // role.create / role.update / role.delete / role.assign / exception.update ...
+  target_type   String?  @db.VarChar(40)
+  target_id     String?  @db.VarChar(60)
+  detail        Json?
+  created_at    DateTime @default(now())
+
+  @@index([created_at])
+  @@index([actor_user_id])
+  @@map("rbac_audit_log")
+}
+
+// =============================================================================
+//  GYM OPS — Entitlement, Audit, Automation, Staff Tasks
+// =============================================================================
+
+enum AutomationTriggerType {
+  subscription_expired
+  subscription_expiring_soon
+  subscription_renewed
+  member_checked_in
+  payment_outstanding
+  manual
+}
+
+enum StaffTaskStatus {
+  open
+  in_progress
+  completed
+  cancelled
+}
+
+enum StaffTaskPriority {
+  low
+  medium
+  high
+}
+
+/// Business-domain audit (members, subscriptions, attendance, payments).
+model business_audit_log {
+  id             Int      @id @default(autoincrement())
+  entity_type    String   @db.VarChar(60)
+  entity_id      String   @db.VarChar(60)
+  action         String   @db.VarChar(60)
+  actor_user_id  Int?
+  actor_name     String?  @db.VarChar(150)
+  branch_id      Int?
+  before_json    Json?
+  after_json     Json?
+  changed_fields Json?
+  reason         String?  @db.Text
+  ip_address     String?  @db.VarChar(45)
+  created_at     DateTime @default(now())
+
+  @@index([entity_type, entity_id])
+  @@index([created_at])
+  @@index([actor_user_id])
+  @@index([branch_id])
+  @@map("business_audit_log")
+}
+
+/// Configurable workflow: trigger → conditions → actions (JSON).
+model automation_workflows {
+  id             Int                   @id @default(autoincrement())
+  key            String                @unique @db.VarChar(60)
+  name_ar        String                @db.VarChar(150)
+  name_en        String?               @db.VarChar(150)
+  trigger_type   AutomationTriggerType
+  trigger_config Json?
+  conditions     Json?
+  actions        Json
+  is_active      Boolean               @default(true)
+  branch_id      Int?
+  created_at     DateTime              @default(now())
+  updated_at     DateTime              @updatedAt
+  runs           automation_runs[]
+
+  @@index([trigger_type, is_active])
+  @@map("automation_workflows")
+}
+
+model automation_runs {
+  id            Int                   @id @default(autoincrement())
+  workflow_id   Int
+  trigger_type  AutomationTriggerType
+  entity_type   String?               @db.VarChar(60)
+  entity_id     String?               @db.VarChar(60)
+  status        String                @db.VarChar(20)
+  detail        Json?
+  error_message String?               @db.Text
+  created_at    DateTime              @default(now())
+  workflow      automation_workflows  @relation(fields: [workflow_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([workflow_id])
+  @@index([created_at])
+  @@map("automation_runs")
+}
+
+/// Staff tasks created by automation or manually (sales follow-up, renewals).
+model staff_tasks {
+  id              Int               @id @default(autoincrement())
+  task_type       String            @db.VarChar(60)
+  title           String            @db.VarChar(255)
+  description     String?           @db.Text
+  member_id       Int?
+  subscription_id Int?
+  assigned_to     Int?
+  status          StaffTaskStatus   @default(open)
+  priority        StaffTaskPriority @default(medium)
+  start_date      String?           @db.VarChar(10)
+  due_date        String?           @db.VarChar(10)
+  branch_id       Int?
+  workflow_run_id Int?
+  closed_at       DateTime?
+  closed_reason   String?           @db.VarChar(255)
+  created_by      Int?
+  created_at      DateTime          @default(now())
+  updated_at      DateTime          @updatedAt
+
+  @@index([member_id])
+  @@index([subscription_id])
+  @@index([status])
+  @@index([assigned_to])
+  @@index([branch_id])
+  @@index([task_type, status])
+  @@map("staff_tasks")
+}
+
+// =====================================================================================
+//  CLUB EVENTS — competitions, workshops, bootcamps, community events (Phase 0+1)
+// =====================================================================================
+
+enum ClubEventKind {
+  competition
+  challenge
+  workshop
+  bootcamp
+  seminar
+  open_day
+  community
+  kids_activity
+  campaign
+}
+
+enum ClubEventStatus {
+  draft
+  pending_approval
+  approved
+  rejected
+  published
+  ongoing
+  completed
+  closed
+  cancelled
+}
+
+enum ClubEventVisibility {
+  internal
+  members
+  public
+}
+
+enum ClubEventRegistrantType {
+  member
+  guest
+  lead
+}
+
+enum ClubEventRegStatus {
+  pending_payment
+  confirmed
+  waitlisted
+  cancelled
+  refunded
+}
+
+enum ClubEventPaymentType {
+  payment
+  refund
+}
+
+enum ClubEventPaymentStatus {
+  pending
+  completed
+  cancelled
+}
+
+enum ClubEventStaffRole {
+  lead_instructor
+  assistant
+  judge
+  coordinator
+  support
+}
+
+enum ClubEventCheckinMethod {
+  qr
+  member_code
+  manual
+}
+
+model attendance_devices {
+  id           Int     @id @default(autoincrement())
+  title        String? @db.VarChar(150)
+  ip           String? @db.VarChar(50)
+  branch_id_fk Int?
+  last_sync    String? @db.VarChar(30) // date-time string
+  status       String? @db.VarChar(20) // online | offline
+  created_at   String? @db.VarChar(30)
+  updated_at   String? @db.VarChar(30)
+
+  @@map("attendance_devices")
+}
+
+/// Lost & Found register (إدارة المفقودات) — FIT90
+model club_lost_found {
+  id              Int      @id @default(autoincrement())
+  item_name       String   @db.VarChar(200)
+  description     String?  @db.Text
+  staff_name      String?  @db.VarChar(150)
+  found_date      String   @db.VarChar(20)
+  found_time      String?  @db.VarChar(20)
+  action_taken    String?  @db.Text
+  branch_id       Int?
+  status          String   @default("stored") @db.VarChar(20) // stored | delivered
+  delivered_to    String?  @db.VarChar(150)
+  delivered_phone String?  @db.VarChar(30)
+  delivered_at    String?  @db.VarChar(30)
+  delivered_note  String?  @db.Text
+  is_deleted      Boolean  @default(false)
+  created_by      Int?
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  @@index([branch_id])
+  @@index([status])
+  @@map("club_lost_found")
+}
+
+/// Sales staff (موظف المبيعات) — System Settings, referenced by member add-form
+model club_sales_staff {
+  id         Int      @id @default(autoincrement())
+  name       String   @db.VarChar(150)
+  phone      String?  @db.VarChar(30)
+  branch_id  Int?
+  is_active  Boolean  @default(true)
+  is_deleted Boolean  @default(false)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@index([branch_id])
+  @@map("club_sales_staff")
+}
+
+/// Available time-slots per day/month for Classes / Spa / InBody (المواعيد المتاحة + جدول شهر جديد)
+model club_availability_slots {
+  id                      Int       @id @default(autoincrement())
+  module_type             String    @db.VarChar(20) // class | spa | inbody
+  branch_id               Int?
+  trainer_id              Int? // classes: per-trainer availability
+  service_id              Int? // spa: optional service
+  slot_date               String    @db.VarChar(10) // yyyy-mm-dd
+  start_time              String    @db.VarChar(8)
+  end_time                String    @db.VarChar(8)
+  capacity                Int       @default(1)
+  booked_count            Int       @default(0)
+  is_active               Boolean   @default(true)
+  is_deleted              Boolean   @default(false)
+  created_at              DateTime  @default(now())
+  monthly_availability_id Int?
+  booking_start_at        DateTime? @db.DateTime(0)
+  booking_end_at          DateTime? @db.DateTime(0)
+  cancelled_at            DateTime? @db.DateTime(0)
+  cancellation_reason     String?   @db.VarChar(500)
+  updated_at              DateTime  @updatedAt
+
+  monthly_availability club_provider_monthly_availabilities? @relation(fields: [monthly_availability_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  nutrition_bookings   club_bookings[]                       @relation("NutritionAvailabilityBooking")
+
+  @@index([module_type, slot_date])
+  @@index([branch_id])
+  @@index([trainer_id])
+  @@index([monthly_availability_id])
+  @@map("club_availability_slots")
+}
+
+/// InBody bookings (حجز انبودى – جدول الحجوزات) — parallel to club_spa_bookings
+model club_inbody_bookings {
+  id           Int      @id @default(autoincrement())
+  member_id    Int?
+  member_name  String?  @db.VarChar(200)
+  slot_id      Int?
+  booking_date String   @db.VarChar(10)
+  start_time   String?  @db.VarChar(8)
+  end_time     String?  @db.VarChar(8)
+  staff_name   String?  @db.VarChar(150)
+  status       String   @default("booked") @db.VarChar(20) // booked | completed | cancelled
+  notes        String?  @db.Text
+  branch_id    Int?
+  is_deleted   Boolean  @default(false)
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  @@index([member_id])
+  @@index([booking_date])
+  @@map("club_inbody_bookings")
+}
+
+// ─── MOS Club extended domain ───────────────────────────────────────────────
+
+enum ClubLookupCategory {
+  class_genre
+  class_program
+  class_type
+  gym_section
+  expense_type
+  owner
+  nationality
+  region
+  visa_type
+  job_title
+  call_feedback
+  class_cancel_reason
+  membership_cancel_reason
+  gym_location
+  lost_category
+  machine_model
+  package_type
+  member_level
+  suit_size
+  member_goal
+  session_type
+  workout_type
+  maintenance_type
+  reservation_type
+  interest_percentage
+}
+
+enum ClubFinancialType {
+  other_revenue
+  expense
+  deduction
+  advance
+  bonus
+  salary
+  employee_commission
+}
+
+enum ClubTicketType {
+  complaint
+  feedback
+  request
+}
+
+enum ClubContentType {
+  faq
+  exercise
+  announcement
+  offer
+  gym_image
+  schedule_image
+  transformation_image
+  app_home_section
+  gym_rule
+  notification_template
+  member_profile_field
+  possible_member_field
+}
+
+enum ClubCommissionKind {
+  sales_range
+  sales_percentage
+  sales_target
+  trainer_range
+  trainer_percentage
+  trainer_target
+  instructor_class_rate
+  package_commission
+  fixed_trainer_commission
+}
+
+enum ClubApprovalStatus {
+  pending
+  approved
+  declined
+}
+
+model club_lookups {
+  id                  Int                              @id @default(autoincrement())
+  category            ClubLookupCategory
+  name                String                           @db.VarChar(200)
+  name_en             String?                          @db.VarChar(200)
+  code                String?                          @db.VarChar(60)
+  sort_order          Int                              @default(0)
+  is_active           Boolean                          @default(true)
+  metadata            Json?
+  created_at          DateTime                         @default(now())
+  updated_at          DateTime                         @updatedAt
+  monthly_schedules   club_class_monthly_schedules[]   @relation("MonthlyScheduleClassType")
+  additional_services club_class_additional_services[] @relation("AdditionalServiceClassType")
+
+  @@unique([category, name])
+  @@index([category, is_active])
+  @@map("club_lookups")
+}
+
+model club_leads {
+  id           Int      @id @default(autoincrement())
+  name         String   @db.VarChar(200)
+  phone        String?  @db.VarChar(30)
+  email        String?  @db.VarChar(120)
+  gender       String?  @db.VarChar(10)
+  source_id    Int?
+  branch_id    Int?
+  status       String   @default("new") @db.VarChar(30)
+  notes        String?  @db.Text
+  follow_up_at String?  @db.VarChar(20)
+  assigned_to  Int?
+  is_deleted   Boolean  @default(false)
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  @@index([branch_id, status])
+  @@map("club_leads")
+}
+
+model club_calls {
+  id          Int      @id @default(autoincrement())
+  member_id   Int?
+  member_name String?  @db.VarChar(200)
+  phone       String?  @db.VarChar(30)
+  call_date   String   @db.VarChar(20)
+  call_time   String?  @db.VarChar(8)
+  subject     String?  @db.VarChar(255)
+  notes       String?  @db.Text
+  outcome     String?  @db.VarChar(100)
+  staff_name  String?  @db.VarChar(150)
+  branch_id   Int?
+  is_deleted  Boolean  @default(false)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  @@index([call_date])
+  @@index([member_id])
+  @@map("club_calls")
+}
+
+model club_invitations {
+  id              Int      @id @default(autoincrement())
+  invitee_name    String   @db.VarChar(200)
+  invitee_phone   String?  @db.VarChar(30)
+  invitee_gender  String?  @db.VarChar(10)
+  invited_by_id   Int?
+  invited_by_name String?  @db.VarChar(200)
+  visit_date      String?  @db.VarChar(20)
+  status          String   @default("sent") @db.VarChar(30)
+  branch_id       Int?
+  notes           String?  @db.Text
+  is_deleted      Boolean  @default(false)
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  @@index([status])
+  @@index([branch_id])
+  @@map("club_invitations")
+}
+
+model club_tickets {
+  id          Int            @id @default(autoincrement())
+  ticket_type ClubTicketType
+  member_id   Int?
+  member_name String?        @db.VarChar(200)
+  subject     String         @db.VarChar(255)
+  body        String?        @db.Text
+  status      String         @default("open") @db.VarChar(30)
+  priority    String         @default("normal") @db.VarChar(20)
+  branch_id   Int?
+  staff_name  String?        @db.VarChar(150)
+  is_deleted  Boolean        @default(false)
+  created_at  DateTime       @default(now())
+  updated_at  DateTime       @updatedAt
+
+  @@index([ticket_type, status])
+  @@map("club_tickets")
+}
+
+model club_financial_entries {
+  id             Int               @id @default(autoincrement())
+  entry_type     ClubFinancialType
+  title          String            @db.VarChar(255)
+  amount         Decimal           @db.Decimal(12, 2)
+  entry_date     String            @db.VarChar(20)
+  employee_id    Int?
+  employee_name  String?           @db.VarChar(200)
+  branch_id      Int?
+  payment_method String?           @db.VarChar(30)
+  notes          String?           @db.Text
+  status         String            @default("posted") @db.VarChar(30)
+  is_deleted     Boolean           @default(false)
+  created_at     DateTime          @default(now())
+  updated_at     DateTime          @updatedAt
+
+  @@index([entry_type, entry_date])
+  @@index([branch_id])
+  @@map("club_financial_entries")
+}
+
+model club_class_rooms {
+  id         Int      @id @default(autoincrement())
+  name       String   @db.VarChar(120)
+  code       String?  @db.VarChar(30)
+  capacity   Int      @default(20)
+  branch_id  Int?
+  is_active  Boolean  @default(true)
+  is_deleted Boolean  @default(false)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@index([branch_id])
+  @@map("club_class_rooms")
+}
+
+model club_machines {
+  id            Int      @id @default(autoincrement())
+  name          String   @db.VarChar(200)
+  serial_number String?  @db.VarChar(100)
+  model_name    String?  @db.VarChar(120)
+  branch_id     Int?
+  status        String   @default("active") @db.VarChar(30)
+  is_deleted    Boolean  @default(false)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  maintenance club_machine_maintenance[]
+
+  @@index([branch_id])
+  @@map("club_machines")
+}
+
+model club_machine_maintenance {
+  id               Int      @id @default(autoincrement())
+  machine_id       Int?
+  machine_name     String?  @db.VarChar(200)
+  maintenance_date String   @db.VarChar(20)
+  maintenance_type String?  @db.VarChar(100)
+  cost             Decimal? @db.Decimal(12, 2)
+  notes            String?  @db.Text
+  branch_id        Int?
+  status           String   @default("scheduled") @db.VarChar(30)
+  is_deleted       Boolean  @default(false)
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  machine club_machines? @relation(fields: [machine_id], references: [id], onDelete: SetNull)
+
+  @@index([maintenance_date])
+  @@map("club_machine_maintenance")
+}
+
+model club_workouts {
+  id           Int      @id @default(autoincrement())
+  title        String   @db.VarChar(200)
+  workout_type String?  @db.VarChar(100)
+  trainer_name String?  @db.VarChar(150)
+  member_id    Int?
+  member_name  String?  @db.VarChar(200)
+  workout_date String?  @db.VarChar(20)
+  notes        String?  @db.Text
+  branch_id    Int?
+  is_deleted   Boolean  @default(false)
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  @@map("club_workouts")
+}
+
+model club_training_notes {
+  id           Int      @id @default(autoincrement())
+  member_id    Int?
+  member_name  String   @db.VarChar(200)
+  trainer_name String?  @db.VarChar(150)
+  note_date    String   @db.VarChar(20)
+  notes        String   @db.Text
+  branch_id    Int?
+  is_deleted   Boolean  @default(false)
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  @@index([member_id])
+  @@map("club_training_notes")
+}
+
+model club_branch_visits {
+  id          Int      @id @default(autoincrement())
+  member_id   Int?
+  member_name String?  @db.VarChar(200)
+  branch_id   Int?
+  visit_date  String   @db.VarChar(20)
+  visit_time  String?  @db.VarChar(8)
+  notes       String?  @db.Text
+  is_deleted  Boolean  @default(false)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  @@index([visit_date])
+  @@map("club_branch_visits")
+}
+
+model club_one_pass_sessions {
+  id           Int      @id @default(autoincrement())
+  member_id    Int?
+  member_name  String?  @db.VarChar(200)
+  session_date String   @db.VarChar(20)
+  service_name String?  @db.VarChar(200)
+  amount       Decimal? @db.Decimal(12, 2)
+  branch_id    Int?
+  status       String   @default("active") @db.VarChar(30)
+  notes        String?  @db.Text
+  is_deleted   Boolean  @default(false)
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  @@map("club_one_pass_sessions")
+}
+
+model club_shifts {
+  id         Int      @id @default(autoincrement())
+  name       String   @db.VarChar(120)
+  start_time String   @db.VarChar(8)
+  end_time   String   @db.VarChar(8)
+  branch_id  Int?
+  is_active  Boolean  @default(true)
+  is_deleted Boolean  @default(false)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("club_shifts")
+}
+
+model club_employee_requests {
+  id            Int      @id @default(autoincrement())
+  employee_id   Int?
+  employee_name String   @db.VarChar(200)
+  request_type  String   @db.VarChar(100)
+  subject       String   @db.VarChar(255)
+  body          String?  @db.Text
+  status        String   @default("pending") @db.VarChar(30)
+  branch_id     Int?
+  is_deleted    Boolean  @default(false)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  @@map("club_employee_requests")
+}
+
+model club_content_items {
+  id           Int             @id @default(autoincrement())
+  content_type ClubContentType
+  title        String          @db.VarChar(255)
+  body         String?         @db.Text
+  image_url    String?         @db.VarChar(500)
+  sort_order   Int             @default(0)
+  is_active    Boolean         @default(true)
+  metadata     Json?
+  branch_id    Int?
+  is_deleted   Boolean         @default(false)
+  created_at   DateTime        @default(now())
+  updated_at   DateTime        @updatedAt
+
+  @@index([content_type, is_active])
+  @@map("club_content_items")
+}
+
+model club_commission_rules {
+  id         Int                @id @default(autoincrement())
+  kind       ClubCommissionKind
+  name       String             @db.VarChar(200)
+  config     Json
+  branch_id  Int?
+  is_active  Boolean            @default(true)
+  is_deleted Boolean            @default(false)
+  created_at DateTime           @default(now())
+  updated_at DateTime           @updatedAt
+
+  @@index([kind, is_active])
+  @@map("club_commission_rules")
+}
+
+model club_free_benefits {
+  id           Int      @id @default(autoincrement())
+  member_id    Int?
+  member_name  String?  @db.VarChar(200)
+  benefit_name String   @db.VarChar(200)
+  benefit_date String   @db.VarChar(20)
+  quantity     Int      @default(1)
+  branch_id    Int?
+  notes        String?  @db.Text
+  is_deleted   Boolean  @default(false)
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  @@map("club_free_benefits")
+}
+
+model club_approval_items {
+  id           Int                @id @default(autoincrement())
+  entity_type  String             @db.VarChar(60)
+  entity_id    Int?
+  title        String             @db.VarChar(255)
+  description  String?            @db.Text
+  status       ClubApprovalStatus @default(pending)
+  requested_by String?            @db.VarChar(150)
+  reviewed_by  String?            @db.VarChar(150)
+  reviewed_at  DateTime?
+  branch_id    Int?
+  metadata     Json?
+  is_deleted   Boolean            @default(false)
+  created_at   DateTime           @default(now())
+  updated_at   DateTime           @updatedAt
+
+  @@index([status])
+  @@map("club_approval_items")
+}
+
+model club_reminders {
+  id            Int      @id @default(autoincrement())
+  lead_id       Int?     @unique
+  member_id     Int?
+  member_name   String?  @db.VarChar(200)
+  title         String   @db.VarChar(255)
+  reminder_date String   @db.VarChar(20)
+  reminder_time String?  @db.VarChar(8)
+  channel       String?  @db.VarChar(30)
+  status        String   @default("pending") @db.VarChar(30)
+  notes         String?  @db.Text
+  branch_id     Int?
+  is_deleted    Boolean  @default(false)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  @@index([reminder_date, status])
+  @@map("club_reminders")
+}
+
+model club_closing_transactions {
+  id           Int      @id @default(autoincrement())
+  closing_date String   @db.VarChar(20)
+  branch_id    Int?
+  total_cash   Decimal  @db.Decimal(12, 2)
+  total_card   Decimal  @db.Decimal(12, 2)
+  total_other  Decimal  @default(0) @db.Decimal(12, 2)
+  notes        String?  @db.Text
+  closed_by    String?  @db.VarChar(150)
+  is_deleted   Boolean  @default(false)
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  @@index([closing_date])
+  @@map("club_closing_transactions")
+}
+
+// =====================================================================================
+//  SCHEDULING & BOOKING — generic single engine (additive; supersedes the
+//  fragmented per-service tables). Everything appointment-based routes through
+//  club_services (catalog) -> club_schedules (slots) -> club_bookings (bookings).
+//  InBody results (club_inbody_records) are independent of scheduling.
+//  Rooms reuse club_class_rooms; machines reuse club_machines; providers
+//  (coach/therapist) reuse club_trainers — referenced by scalar id + index.
+// =====================================================================================
+
+/// Service category. `additional` is fully dynamic (Hijama, Massage, ...).
+enum ClubServiceCategory {
+  class
+  zumba
+  nutrition
+  spa
+  personal_training
+  inbody
+  additional
+}
+
+/// Lifecycle of a schedule slot.
+enum ClubScheduleStatus {
+  available
+  cancelled
+  hidden
+}
+
+/// Lifecycle of a booking against a schedule slot.
+enum ClubApptBookingStatus {
+  pending
+  confirmed
+  wait
+  completed
+  cancelled
+  no_show
+}
+
+enum ClassMonthlyScheduleStatus {
+  draft
+  published
+  archived
+}
+
+enum ProviderMonthlyAvailabilityStatus {
+  draft
+  published
+  archived
+}
+
+enum ClassScheduleSlotStatus {
+  available
+  unavailable
+  cancelled
+}
+
+enum ClassBookingStatus {
+  confirmed
+  wait
+  cancelled
+  completed
+  no_show
+}
+
+enum BookingAdditionalServiceStatus {
+  confirmed
+  cancelled
+  completed
+}
+
+/// Service catalog — the single source of truth for every bookable service.
+model club_services {
+  id              Int                 @id @default(autoincrement())
+  name            String              @db.VarChar(200)
+  class_type_id   Int?
+  category        ClubServiceCategory @default(additional)
+  description     String?             @db.Text
+  entitlement_key String?             @db.VarChar(50)
+  duration_min    Int                 @default(60) // default slot length in minutes
+  price           Decimal             @default(0) @db.Decimal(10, 2)
+  capacity        Int? // optional default capacity per slot (null = single/unbounded)
+  color           String?             @db.VarChar(20) // hex color for calendar coding
+  branch_id       Int?
+  is_active       Boolean             @default(true)
+  is_deleted      Boolean             @default(false)
+  created_at      DateTime            @default(now())
+  updated_at      DateTime            @updatedAt
+
+  schedules                   club_schedules[]
+  monthly_schedules           club_service_monthly_schedules[]
+  bookings                    club_bookings[]
+  class_additional_services   club_class_additional_services[]
+  slot_additional_services    club_slot_additional_services[]
+  booking_additional_services club_booking_additional_services[]
+  service_additional_links    club_service_additional_services[]      @relation("BaseServiceAdditionalServices")
+  additional_catalog_links    club_service_additional_services[]      @relation("AdditionalServiceCatalogLinks")
+  appointment_additional_uses club_appt_booking_additional_services[] @relation("AppointmentBookingAdditionalService")
+  additional_schedule_uses    club_schedules[]                        @relation("ScheduleAdditionalService")
+
+  @@index([category])
+  @@index([class_type_id])
+  @@index([branch_id])
+  @@map("club_services")
+}
+
+/// Schedule slot — a concrete bookable time window for a service.
+model club_schedules {
+  id                    Int                @id @default(autoincrement())
+  service_id            Int
+  additional_service_id Int?
+  employee_id           Int? // provider (coach/therapist) -> club_trainers.id
+  room_id               Int? // -> club_class_rooms.id
+  machine_id            Int? // -> club_machines.id (InBody etc.)
+  branch_id             Int?
+  slot_date             String             @db.VarChar(10) // yyyy-mm-dd
+  start_time            String             @db.VarChar(8) // HH:mm[:ss]
+  end_time              String             @db.VarChar(8)
+  booking_start_at      DateTime?          @db.DateTime(0) // optional reservation opening date/time
+  booking_end_at        DateTime?          @db.DateTime(0) // optional reservation closing date/time
+  capacity              Int                @default(1)
+  booked_count          Int                @default(0)
+  status                ClubScheduleStatus @default(available)
+  recurrence_group      String?            @db.VarChar(40) // groups bulk/recurring occurrences
+  monthly_schedule_id   Int?
+  notes                 String?            @db.Text
+  is_deleted            Boolean            @default(false)
+  created_at            DateTime           @default(now())
+  updated_at            DateTime           @updatedAt
+
+  service            club_services                   @relation(fields: [service_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  additional_service club_services?                  @relation("ScheduleAdditionalService", fields: [additional_service_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  monthly_schedule   club_service_monthly_schedules? @relation(fields: [monthly_schedule_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  bookings           club_bookings[]
+
+  @@index([service_id])
+  @@index([additional_service_id])
+  @@index([monthly_schedule_id])
+  @@index([slot_date])
+  @@index([employee_id])
+  @@index([room_id])
+  @@index([machine_id])
+  @@index([branch_id])
+  @@index([status])
+  @@map("club_schedules")
+}
+
+/// Publishable monthly plan for Nutrition, SPA and Personal Training services.
+model club_service_monthly_schedules {
+  id           Int                        @id @default(autoincrement())
+  service_id   Int
+  employee_id  Int
+  category     ClubServiceCategory
+  month        Int                        @db.TinyInt
+  year         Int                        @db.SmallInt
+  status       ClassMonthlyScheduleStatus @default(draft)
+  published_at DateTime?                  @db.DateTime(0)
+  created_at   DateTime                   @default(now()) @db.DateTime(0)
+  updated_at   DateTime                   @updatedAt @db.DateTime(0)
+
+  service club_services    @relation(fields: [service_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  slots   club_schedules[]
+
+  @@unique([service_id, employee_id, month, year], map: "service_monthly_unique")
+  @@index([category, status])
+  @@map("club_service_monthly_schedules")
+}
+
+/// Booking — a member (or walk-in) reserving a schedule slot.
+/// Service-independent monthly attendance plan for a nutrition specialist.
+model club_provider_monthly_availabilities {
+  id           Int                               @id @default(autoincrement())
+  employee_id  Int
+  category     ClubServiceCategory               @default(nutrition)
+  month        Int                               @db.TinyInt
+  year         Int                               @db.SmallInt
+  status       ProviderMonthlyAvailabilityStatus @default(draft)
+  published_at DateTime?                         @db.DateTime(0)
+  created_at   DateTime                          @default(now()) @db.DateTime(0)
+  updated_at   DateTime                          @updatedAt @db.DateTime(0)
+
+  windows club_availability_slots[]
+
+  @@unique([employee_id, category, month, year], map: "provider_monthly_availability_unique")
+  @@index([category, status])
+  @@map("club_provider_monthly_availabilities")
+}
+
+model club_bookings {
+  id                         Int                   @id @default(autoincrement())
+  booking_number             String                @unique @db.VarChar(30)
+  member_id                  Int?
+  member_name                String?               @db.VarChar(200)
+  service_id                 Int
+  schedule_id                Int
+  availability_slot_id       Int?
+  employee_id                Int? // denormalized provider for fast list/filter
+  booking_date               String                @db.VarChar(10) // yyyy-mm-dd (the slot date)
+  status                     ClubApptBookingStatus @default(pending)
+  notes                      String?               @db.Text
+  duration_min_snapshot      Int?
+  price_snapshot             Decimal?              @db.Decimal(10, 2)
+  coverage_type              String?               @db.VarChar(30)
+  entitlement_key_snapshot   String?               @db.VarChar(50)
+  payment_status             String?               @db.VarChar(30)
+  entitlement_restored_at    DateTime?             @db.DateTime(0)
+  entitlement_restored_by    Int?
+  entitlement_restore_reason String?               @db.VarChar(500)
+  branch_id                  Int?
+  is_deleted                 Boolean               @default(false)
+  created_at                 DateTime              @default(now())
+  updated_at                 DateTime              @updatedAt
+
+  schedule            club_schedules                          @relation(fields: [schedule_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  availability_slot   club_availability_slots?                @relation("NutritionAvailabilityBooking", fields: [availability_slot_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  service             club_services                           @relation(fields: [service_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  additional_services club_appt_booking_additional_services[]
+
+  @@index([schedule_id])
+  @@index([availability_slot_id])
+  @@index([service_id])
+  @@index([member_id])
+  @@index([employee_id])
+  @@index([booking_date])
+  @@index([status])
+  @@index([branch_id])
+  @@map("club_bookings")
+}
+
+/// Additional-service choices enabled for a generic scheduling service.
+/// Used by SPA appointments without coupling them to class-specific slots.
+model club_service_additional_services {
+  id                    Int      @id @default(autoincrement())
+  parent_service_id     Int
+  additional_service_id Int
+  is_required           Boolean  @default(false)
+  is_active             Boolean  @default(true)
+  created_at            DateTime @default(now()) @db.DateTime(0)
+  updated_at            DateTime @updatedAt @db.DateTime(0)
+
+  parent_service     club_services @relation("BaseServiceAdditionalServices", fields: [parent_service_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  additional_service club_services @relation("AdditionalServiceCatalogLinks", fields: [additional_service_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([parent_service_id, additional_service_id])
+  @@index([additional_service_id])
+  @@map("club_service_additional_services")
+}
+
+/// Additional service selected for a SPA/generic appointment booking.
+model club_appt_booking_additional_services {
+  id                    Int                            @id @default(autoincrement())
+  booking_id            Int
+  additional_service_id Int
+  status                BookingAdditionalServiceStatus @default(confirmed)
+  created_at            DateTime                       @default(now()) @db.DateTime(0)
+  updated_at            DateTime                       @updatedAt @db.DateTime(0)
+
+  booking            club_bookings @relation(fields: [booking_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  additional_service club_services @relation("AppointmentBookingAdditionalService", fields: [additional_service_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([booking_id, additional_service_id])
+  @@index([additional_service_id, status])
+  @@map("club_appt_booking_additional_services")
+}
+
+/// Publishable monthly plan for one class and trainer.
+model club_class_monthly_schedules {
+  id           Int                        @id @default(autoincrement())
+  class_id     Int
+  trainer_id   Int
+  month        Int                        @db.TinyInt
+  year         Int                        @db.SmallInt
+  status       ClassMonthlyScheduleStatus @default(draft)
+  published_at DateTime?                  @db.DateTime(0)
+  created_at   DateTime                   @default(now()) @db.DateTime(0)
+  updated_at   DateTime                   @updatedAt @db.DateTime(0)
+
+  class   club_lookups                @relation("MonthlyScheduleClassType", fields: [class_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  trainer club_trainers               @relation(fields: [trainer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  slots   club_class_schedule_slots[]
+
+  @@unique([class_id, trainer_id, month, year])
+  @@index([status])
+  @@map("club_class_monthly_schedules")
+}
+
+/// Concrete bookable occurrence within a monthly class plan.
+model club_class_schedule_slots {
+  id                  Int                     @id @default(autoincrement())
+  monthly_schedule_id Int
+  start_at            DateTime                @db.DateTime(0)
+  end_at              DateTime                @db.DateTime(0)
+  booking_start_at    DateTime?               @db.DateTime(0)
+  booking_end_at      DateTime?               @db.DateTime(0)
+  capacity            Int
+  status              ClassScheduleSlotStatus @default(available)
+  created_at          DateTime                @default(now()) @db.DateTime(0)
+  updated_at          DateTime                @updatedAt @db.DateTime(0)
+
+  monthly_schedule    club_class_monthly_schedules    @relation(fields: [monthly_schedule_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  additional_services club_slot_additional_services[]
+  bookings            club_class_bookings[]
+
+  @@index([monthly_schedule_id])
+  @@index([start_at])
+  @@index([status])
+  @@map("club_class_schedule_slots")
+}
+
+/// Additional service enabled for a class by default.
+model club_class_additional_services {
+  id          Int      @id @default(autoincrement())
+  class_id    Int
+  service_id  Int
+  is_required Boolean  @default(false)
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now()) @db.DateTime(0)
+  updated_at  DateTime @updatedAt @db.DateTime(0)
+
+  class   club_lookups  @relation("AdditionalServiceClassType", fields: [class_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  service club_services @relation(fields: [service_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([class_id, service_id])
+  @@map("club_class_additional_services")
+}
+
+/// Additional service availability and capacity for one slot.
+model club_slot_additional_services {
+  id          Int      @id @default(autoincrement())
+  slot_id     Int
+  service_id  Int
+  capacity    Int
+  is_required Boolean  @default(false)
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now()) @db.DateTime(0)
+  updated_at  DateTime @updatedAt @db.DateTime(0)
+
+  slot             club_class_schedule_slots          @relation(fields: [slot_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  service          club_services                      @relation(fields: [service_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  booking_services club_booking_additional_services[]
+
+  @@unique([slot_id, service_id])
+  @@map("club_slot_additional_services")
+}
+
+/// A user's reservation for one class schedule slot.
+model club_class_bookings {
+  id           Int                @id @default(autoincrement())
+  slot_id      Int
+  user_id      Int?
+  member_id    Int?
+  status       ClassBookingStatus @default(confirmed)
+  booked_at    DateTime           @default(now()) @db.DateTime(0)
+  cancelled_at DateTime?          @db.DateTime(0)
+  created_at   DateTime           @default(now()) @db.DateTime(0)
+  updated_at   DateTime           @updatedAt @db.DateTime(0)
+
+  slot                club_class_schedule_slots          @relation(fields: [slot_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user                users?                             @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
+  member              club_members?                      @relation(fields: [member_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  additional_services club_booking_additional_services[]
+
+  @@unique([slot_id, user_id])
+  @@unique([slot_id, member_id])
+  @@index([slot_id, status])
+  @@index([user_id, status])
+  @@index([member_id, status])
+  @@map("club_class_bookings")
+}
+
+/// Additional service selected as part of a class booking.
+model club_booking_additional_services {
+  id                         Int                            @id @default(autoincrement())
+  booking_id                 Int
+  slot_additional_service_id Int
+  service_id                 Int
+  status                     BookingAdditionalServiceStatus @default(confirmed)
+  created_at                 DateTime                       @default(now()) @db.DateTime(0)
+  updated_at                 DateTime                       @updatedAt @db.DateTime(0)
+
+  booking                 club_class_bookings           @relation(fields: [booking_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  slot_additional_service club_slot_additional_services @relation(fields: [slot_additional_service_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  service                 club_services                 @relation(fields: [service_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([booking_id, service_id])
+  @@index([slot_additional_service_id, status])
+  @@map("club_booking_additional_services")
+}
+
+/// InBody result record — independent of scheduling. Registered after a
+/// completed InBody appointment; provides per-member history.
+model club_inbody_records {
+  id          Int      @id @default(autoincrement())
+  member_id   Int
+  member_name String?  @db.VarChar(200)
+  record_date String   @db.VarChar(10) // yyyy-mm-dd
+  employee_id Int? // registering staff -> club_trainers.id
+  staff_name  String?  @db.VarChar(150)
+  file_url    String?  @db.VarChar(255) // PDF/image public url
+  file_path   String?  @db.VarChar(255)
+  weight      Decimal? @db.Decimal(6, 2)
+  body_fat    Decimal? @db.Decimal(5, 2)
+  muscle_mass Decimal? @db.Decimal(6, 2)
+  bmi         Decimal? @db.Decimal(5, 2)
+  notes       String?  @db.Text
+  branch_id   Int?
+  is_deleted  Boolean  @default(false)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  @@index([member_id])
+  @@index([record_date])
+  @@map("club_inbody_records")
+}
+
+/// Scheduling notifications — outbound event log for booking lifecycle & reminders.
+/// Decoupled from the legacy tbl_notifications so the scheduling engine owns its
+/// own channel without duplicating logic. A cron dispatches `pending` reminders.
+enum ClubNotificationType {
+  booking_confirmed
+  booking_cancelled
+  appointment_reminder
+  schedule_changed
+  member_message
+}
+
+model club_notifications {
+  id          Int                  @id @default(autoincrement())
+  type        ClubNotificationType
+  booking_id  Int?
+  schedule_id Int?
+  member_id   Int?
+  to_user     Int?
+  title       String               @db.VarChar(200)
+  message     String               @db.VarChar(1000)
+  send_at     String?              @db.VarChar(19)
+  status      String               @default("pending") @db.VarChar(20)
+  channel     String               @default("in_app") @db.VarChar(20)
+  branch_id   Int?
+  created_at  DateTime             @default(now())
+  updated_at  DateTime             @updatedAt
+
+  @@index([status, send_at])
+  @@index([booking_id])
+  @@index([member_id])
+  @@map("club_notifications")
+}
+
+/// Internal migration execution state. It records source hashes and the
+/// target scope without retaining database connection details.
+model data_import_batches {
+  id               Int                   @id @default(autoincrement())
+  batch_hash       String                @unique @db.VarChar(64)
+  source_manifest  Json?
+  target_branch_id Int
+  environment      String                @db.VarChar(20)
+  dry_run          Boolean               @default(true)
+  status           String                @default("running") @db.VarChar(20)
+  summary          Json?
+  failure_code     String?               @db.VarChar(100)
+  started_at       DateTime              @default(now())
+  completed_at     DateTime?
+  created_at       DateTime              @default(now())
+  records          data_import_records[]
+
+  @@index([target_branch_id, status])
+  @@map("data_import_batches")
+}
+
+/// One source-row outcome within an import batch. The source coordinate is
+/// intentionally stable so re-running the same files cannot create a duplicate.
+model data_import_records {
+  id                Int                 @id @default(autoincrement())
+  batch_id          Int
+  source_file       String              @db.VarChar(255)
+  sheet_name        String              @db.VarChar(100)
+  source_row_number Int
+  legacy_id         String?             @db.VarChar(100)
+  target_table      String              @db.VarChar(100)
+  target_id         Int?
+  result            String              @db.VarChar(20)
+  error_code        String?             @db.VarChar(100)
+  details           Json?
+  created_at        DateTime            @default(now())
+  batch             data_import_batches @relation(fields: [batch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([source_file, sheet_name, source_row_number, target_table], map: "uq_data_import_source_record")
+  @@index([batch_id])
+  @@index([target_table, target_id])
+  @@map("data_import_records")
+}

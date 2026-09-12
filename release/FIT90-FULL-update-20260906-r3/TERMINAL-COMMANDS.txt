@@ -1,0 +1,14 @@
+# 1) Upload FIT90-FULL-update-20260906-r3.zip to:
+#    /home/metacodecx/fit90.metacodecx.com/
+#
+# 2) Run these commands as the cPanel account (NOT root):
+export PATH=/opt/cpanel/ea-nodejs20/bin:$PATH
+mkdir -p /home/metacodecx/fit90-updates/2026-09-06-r3
+unzip -o /home/metacodecx/fit90.metacodecx.com/FIT90-FULL-update-20260906-r3.zip -d /home/metacodecx/fit90-updates/2026-09-06-r3
+cd /home/metacodecx/fit90-updates/2026-09-06-r3/FIT90-FULL-update-20260906-r3
+bash deploy-cpanel.sh /home/metacodecx/fit90.metacodecx.com
+
+# 3) Give ROOT-PM2-COMMAND.txt to the root administrator.
+#
+# This release does not run prisma db push, import data, seed data,
+# replace .env, or copy uploads.

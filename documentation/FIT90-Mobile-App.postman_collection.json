@@ -1,0 +1,631 @@
+{
+  "info": {
+    "name": "FIT90 Mobile App API",
+    "description": "FIT90 Flutter app APIs: customer account, content, class schedules, booking, waitlist and notifications.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:4000/api" },
+    { "key": "customerToken", "value": "" },
+    { "key": "exerciseId", "value": "1" },
+    { "key": "notificationId", "value": "1" },
+    { "key": "branchId", "value": "1" },
+    { "key": "subscriptionTypeId", "value": "1" },
+    { "key": "trainerId", "value": "1" },
+    { "key": "classId", "value": "1" },
+    { "key": "slotId", "value": "1" },
+    { "key": "bookingId", "value": "1" },
+    { "key": "scheduleYear", "value": "2026" },
+    { "key": "scheduleMonth", "value": "7" },
+    { "key": "appointmentCategory", "value": "nutrition" },
+    { "key": "appointmentServiceId", "value": "1" },
+    { "key": "appointmentTrainerId", "value": "1" },
+    { "key": "appointmentScheduleId", "value": "1" },
+    { "key": "appointmentBookingId", "value": "1" },
+    { "key": "spaServiceId", "value": "1" },
+    { "key": "spaTrainerId", "value": "1" },
+    { "key": "spaScheduleId", "value": "1" },
+    { "key": "spaBookingId", "value": "1" },
+    { "key": "personalTrainingServiceId", "value": "1" },
+    { "key": "personalTrainingTrainerId", "value": "1" },
+    { "key": "personalTrainingScheduleId", "value": "1" },
+    { "key": "personalTrainingBookingId", "value": "1" }
+  ],
+  "item": [
+    {
+      "name": "Customer login",
+      "event": [{
+        "listen": "test",
+        "script": { "exec": ["const json = pm.response.json();", "if (json.accessToken) pm.collectionVariables.set('customerToken', json.accessToken);"] }
+      }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"phone\": \"01001234567\",\n  \"password\": \"01001234567\"\n}" },
+        "url": "{{baseUrl}}/mobile/app/login"
+      }
+    },
+    {
+      "name": "Get customer profile",
+      "request": {
+        "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }] },
+        "method": "GET",
+        "url": "{{baseUrl}}/mobile/app/profile"
+      }
+    },
+    {
+      "name": "Get my InBody measurements and nutrition plan",
+      "request": {
+        "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }] },
+        "method": "GET",
+        "url": "{{baseUrl}}/mobile/app/inbody-measurements"
+      }
+    },
+    {
+      "name": "Get my InBody measurement details",
+      "request": {
+        "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }] },
+        "method": "GET",
+        "url": "{{baseUrl}}/mobile/app/inbody-measurements/1"
+      }
+    },
+    {
+      "name": "Update customer profile picture",
+      "request": {
+        "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }] },
+        "method": "PATCH",
+        "header": [],
+        "body": { "mode": "formdata", "formdata": [{ "key": "file", "type": "file", "src": [] }] },
+        "url": "{{baseUrl}}/mobile/app/profile/picture"
+      }
+    },
+    {
+      "name": "Change customer password",
+      "request": {
+        "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }] },
+        "method": "PATCH",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"currentPassword\": \"01001234567\",\n  \"newPassword\": \"NewPassword123\"\n}" },
+        "url": "{{baseUrl}}/mobile/app/profile/password"
+      }
+    },
+    { "name": "Get all ads", "request": { "method": "GET", "url": "{{baseUrl}}/mobile/app/ads" } },
+    { "name": "Get ad by id", "request": { "method": "GET", "url": "{{baseUrl}}/mobile/app/ads/1" } },
+    { "name": "Get all offers", "request": { "method": "GET", "url": "{{baseUrl}}/mobile/app/offers" } },
+    { "name": "Get offer by id", "request": { "method": "GET", "url": "{{baseUrl}}/mobile/app/offers/1" } },
+    { "name": "Get FAQs", "request": { "method": "GET", "url": "{{baseUrl}}/mobile/app/faqs" } },
+    { "name": "Get exercises", "request": { "method": "GET", "url": "{{baseUrl}}/mobile/app/exercises" } },
+    { "name": "Get exercise details", "request": { "method": "GET", "url": "{{baseUrl}}/mobile/app/exercises/{{exerciseId}}" } },
+    { "name": "Get terms and conditions", "request": { "method": "GET", "url": "{{baseUrl}}/mobile/app/terms-and-conditions" } },
+    { "name": "Get privacy policy", "request": { "method": "GET", "url": "{{baseUrl}}/mobile/app/privacy-policy" } },
+    { "name": "Get about app", "request": { "method": "GET", "url": "{{baseUrl}}/mobile/app/about" } },
+    { "name": "Get trainers", "request": { "method": "GET", "url": "{{baseUrl}}/mobile/app/trainers" } },
+    { "name": "Get trainers by branch", "request": { "method": "GET", "url": "{{baseUrl}}/mobile/app/trainers?branchId={{branchId}}" } },
+    { "name": "Get subscription types", "request": { "method": "GET", "url": "{{baseUrl}}/mobile/app/subscription-types" } },
+    { "name": "Get subscription types by branch", "request": { "method": "GET", "url": "{{baseUrl}}/mobile/app/subscription-types?branchId={{branchId}}" } },
+    { "name": "Get subscription type details", "request": { "method": "GET", "url": "{{baseUrl}}/mobile/app/subscription-types/{{subscriptionTypeId}}" } },
+    { "name": "Get subscription type details by branch", "request": { "method": "GET", "url": "{{baseUrl}}/mobile/app/subscription-types/{{subscriptionTypeId}}?branchId={{branchId}}" } },
+    {
+      "name": "Get my points balance",
+      "request": {
+        "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }] },
+        "method": "GET",
+        "url": "{{baseUrl}}/mobile/app/points"
+      }
+    },
+    {
+      "name": "Get my points history",
+      "request": {
+        "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }] },
+        "method": "GET",
+        "url": "{{baseUrl}}/mobile/app/points/history?limit=50"
+      }
+    },
+    {
+      "name": "Get my subscriptions",
+      "request": {
+        "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }] },
+        "method": "GET",
+        "url": "{{baseUrl}}/mobile/app/subscriptions"
+      }
+    },
+    {
+      "name": "Get my freeze history",
+      "request": {
+        "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }] },
+        "method": "GET",
+        "url": "{{baseUrl}}/mobile/app/subscriptions/freeze-history"
+      }
+    },
+    {
+      "name": "Get my notifications",
+      "request": {
+        "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }] },
+        "method": "GET",
+        "url": "{{baseUrl}}/mobile/app/notifications?limit=50"
+      }
+    },
+    {
+      "name": "Mark notification as read",
+      "request": {
+        "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }] },
+        "method": "PATCH",
+        "url": "{{baseUrl}}/mobile/app/notifications/{{notificationId}}/read"
+      }
+    },
+    {
+      "name": "Mark all notifications as read",
+      "request": {
+        "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }] },
+        "method": "PATCH",
+        "url": "{{baseUrl}}/mobile/app/notifications/read-all"
+      }
+    },
+    {
+      "name": "Delete customer account",
+      "request": {
+        "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }] },
+        "method": "DELETE",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"password\": \"CurrentPassword\"\n}" },
+        "url": "{{baseUrl}}/mobile/app/account"
+      }
+    },
+    {
+      "name": "Create complaint",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"type\": \"complaint\",\n  \"subject\": \"ازدحام في وقت الذروة\",\n  \"body\": \"برجاء مراجعة عدد الأجهزة المتاحة.\",\n  \"memberName\": \"أحمد محمد\",\n  \"memberId\": 15,\n  \"branchId\": 1\n}" },
+        "url": "{{baseUrl}}/mobile/app/tickets"
+      }
+    },
+    {
+      "name": "Create suggestion",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"type\": \"suggestion\",\n  \"subject\": \"إضافة حصة جديدة\",\n  \"body\": \"أقترح إضافة حصة يوغا صباحية.\",\n  \"memberName\": \"أحمد محمد\",\n  \"memberId\": 15,\n  \"branchId\": 1\n}" },
+        "url": "{{baseUrl}}/mobile/app/tickets"
+      }
+    },
+    {
+      "name": "Create member feedback",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"memberName\": \"شهد محمد العنزي\",\n  \"subject\": \"إشادة بالمدرب\",\n  \"notes\": \"شكرًا لملاحظاتكم القيمة.\"\n}" },
+        "url": "{{baseUrl}}/mobile/app/feedback"
+      }
+    },
+    {
+      "name": "Create invitation",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"inviteeName\": \"محمد علي\",\n  \"inviteePhone\": \"+201001234567\",\n  \"inviteeGender\": \"male\",\n  \"invitedById\": 15,\n  \"invitedByName\": \"أحمد محمد\",\n  \"visitDate\": \"2026-07-20\",\n  \"branchId\": 1,\n  \"notes\": \"زيارة تجريبية\"\n}" },
+        "url": "{{baseUrl}}/mobile/app/invitations"
+      }
+    },
+    {
+      "name": "Class schedules and bookings",
+      "description": "Authenticated mobile-member APIs. Run Customer login first so customerToken is populated.",
+      "item": [
+        {
+          "name": "Get class catalog",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/mobile/app/classes/catalog",
+            "description": "Returns class types that have published future schedules."
+          }
+        },
+        {
+          "name": "Get class trainers",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/mobile/app/classes/trainers?classId={{classId}}",
+            "description": "Returns trainers with published future slots. Remove classId to return trainers for every class."
+          }
+        },
+        {
+          "name": "Get trainer monthly schedule",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const json = pm.response.json();",
+                "const firstSlot = json.days && json.days.flatMap(day => day.slots || [])[0];",
+                "if (firstSlot && firstSlot.id) pm.collectionVariables.set('slotId', firstSlot.id);",
+                "pm.test('Class service and trainer are returned', function () {",
+                "  if (firstSlot) {",
+                "    pm.expect(firstSlot.service).to.have.property('name');",
+                "    pm.expect(firstSlot.trainer).to.have.property('name');",
+                "  }",
+                "});"
+              ]
+            }
+          }],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/mobile/app/classes/schedule?trainerId={{trainerId}}&year={{scheduleYear}}&month={{scheduleMonth}}&classId={{classId}}",
+            "description": "Monthly schedule grouped by Cairo day. Includes availability, booking window, remaining capacity, myBooking and freeSession."
+          }
+        },
+        {
+          "name": "Get class slot details",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/mobile/app/classes/slots/{{slotId}}",
+            "description": "Returns one member-aware class slot."
+          }
+        },
+        {
+          "name": "Create class booking",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const json = pm.response.json();",
+                "if (json.id) pm.collectionVariables.set('bookingId', json.id);",
+                "pm.test('Booking is confirmed or waitlisted', function () {",
+                "  pm.expect(['confirmed', 'wait']).to.include(json.status);",
+                "});"
+              ]
+            }
+          }],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"slotId\": {{slotId}}\n}"
+            },
+            "url": "{{baseUrl}}/mobile/app/classes/bookings",
+            "description": "Creates a confirmed booking when capacity exists; otherwise creates a wait-list booking and returns waitlistPosition."
+          }
+        },
+        {
+          "name": "Get my upcoming class bookings",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/mobile/app/classes/bookings/my?scope=upcoming",
+            "description": "Returns upcoming confirmed and waiting bookings for the authenticated member. Optional status: confirmed, wait, cancelled, completed or no_show."
+          }
+        },
+        {
+          "name": "Get my waiting bookings",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/mobile/app/classes/bookings/my?status=wait&scope=upcoming",
+            "description": "Returns future wait-list bookings and each booking's current waitlistPosition."
+          }
+        },
+        {
+          "name": "Cancel my class booking",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }] },
+            "method": "PATCH",
+            "url": "{{baseUrl}}/mobile/app/classes/bookings/{{bookingId}}/cancel",
+            "description": "Cancels the member's booking. If it was confirmed, the oldest waiting member is promoted automatically."
+          }
+        },
+        {
+          "name": "Get class booking notifications",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/mobile/app/classes/notifications",
+            "description": "Returns the latest 50 class-booking notifications for the authenticated member."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Nutrition, SPA and Personal Training",
+      "description": "Unified mobile appointment APIs. appointmentCategory accepts nutrition, spa or personal_training. Every schedule and slot includes service and trainer objects.",
+      "item": [
+        {
+          "name": "Get department services",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "const json = pm.response.json();",
+              "if (json.data && json.data[0]) pm.collectionVariables.set('appointmentServiceId', json.data[0].id);"
+            ] }
+          }],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/mobile/app/appointments/services?category={{appointmentCategory}}",
+            "description": "Returns services with published future schedules for nutrition, spa or personal_training."
+          }
+        },
+        {
+          "name": "Get service trainers",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "const json = pm.response.json();",
+              "if (json.data && json.data[0]) pm.collectionVariables.set('appointmentTrainerId', json.data[0].id);"
+            ] }
+          }],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/mobile/app/appointments/trainers?category={{appointmentCategory}}&serviceId={{appointmentServiceId}}",
+            "description": "Returns trainers/providers for the selected service."
+          }
+        },
+        {
+          "name": "Get service monthly schedule",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "const json = pm.response.json();",
+              "const firstSlot = json.days && json.days.flatMap(day => day.slots || [])[0];",
+              "if (firstSlot && firstSlot.id) pm.collectionVariables.set('appointmentScheduleId', firstSlot.id);",
+              "pm.test('Service and trainer are returned', function () {",
+              "  pm.expect(json.service).to.have.property('name');",
+              "  pm.expect(json.trainer).to.have.property('name');",
+              "  if (firstSlot) {",
+              "    pm.expect(firstSlot.service).to.have.property('name');",
+              "    pm.expect(firstSlot.trainer).to.have.property('name');",
+              "  }",
+              "});"
+            ] }
+          }],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/mobile/app/appointments/schedule?category={{appointmentCategory}}&serviceId={{appointmentServiceId}}&trainerId={{appointmentTrainerId}}&year={{scheduleYear}}&month={{scheduleMonth}}",
+            "description": "Monthly schedule grouped by Cairo day. The response header and every slot contain service.name and trainer.name."
+          }
+        },
+        {
+          "name": "Get service slot details",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/mobile/app/appointments/slots/{{appointmentScheduleId}}",
+            "description": "Returns one appointment with service, trainer, availability and the member's booking."
+          }
+        },
+        {
+          "name": "Create service booking",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "const json = pm.response.json();",
+              "if (json.id) pm.collectionVariables.set('appointmentBookingId', json.id);",
+              "pm.test('Booking includes service and trainer', function () {",
+              "  pm.expect(json.service).to.have.property('name');",
+              "  pm.expect(json.trainer).to.have.property('name');",
+              "});"
+            ] }
+          }],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"scheduleId\": {{appointmentScheduleId}}\n}" },
+            "url": "{{baseUrl}}/mobile/app/appointments/bookings",
+            "description": "Creates a confirmed booking or a wait-list booking when capacity is full."
+          }
+        },
+        {
+          "name": "Get my service bookings",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/mobile/app/appointments/bookings/my?category={{appointmentCategory}}&scope=upcoming",
+            "description": "Returns upcoming bookings with service, trainer, schedule and wait-list position."
+          }
+        },
+        {
+          "name": "Cancel service booking",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }] },
+            "method": "PATCH",
+            "url": "{{baseUrl}}/mobile/app/appointments/bookings/{{appointmentBookingId}}/cancel",
+            "description": "Cancels the booking and promotes the oldest waiting member when applicable."
+          }
+        }
+      ]
+    },
+    {
+      "name": "SPA - Dedicated API",
+      "description": "Dedicated SPA routes. All requests require a customer Bearer token and only accept SPA services, schedules and bookings.",
+      "item": [
+        {
+          "name": "Get SPA services",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "const json = pm.response.json();",
+              "if (json.data && json.data[0]) pm.collectionVariables.set('spaServiceId', json.data[0].id);"
+            ] }
+          }],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/mobile/app/spa/services"
+          }
+        },
+        {
+          "name": "Get SPA providers",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "const json = pm.response.json();",
+              "if (json.data && json.data[0]) pm.collectionVariables.set('spaTrainerId', json.data[0].id);"
+            ] }
+          }],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/mobile/app/spa/trainers?serviceId={{spaServiceId}}"
+          }
+        },
+        {
+          "name": "Get SPA monthly schedule",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "const json = pm.response.json();",
+              "const firstSlot = json.days && json.days.flatMap(day => day.slots || [])[0];",
+              "if (firstSlot && firstSlot.id) pm.collectionVariables.set('spaScheduleId', firstSlot.id);"
+            ] }
+          }],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/mobile/app/spa/schedule?serviceId={{spaServiceId}}&trainerId={{spaTrainerId}}&year={{scheduleYear}}&month={{scheduleMonth}}"
+          }
+        },
+        {
+          "name": "Get SPA slot details",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/mobile/app/spa/slots/{{spaScheduleId}}"
+          }
+        },
+        {
+          "name": "Create SPA booking",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "const json = pm.response.json();",
+              "if (json.id) pm.collectionVariables.set('spaBookingId', json.id);"
+            ] }
+          }],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"scheduleId\": {{spaScheduleId}}\n}" },
+            "url": "{{baseUrl}}/mobile/app/spa/bookings",
+            "description": "Returns confirmed, or wait with SERVICE_FULL_WAITLISTED when capacity is full."
+          }
+        },
+        {
+          "name": "Get my SPA bookings",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/mobile/app/spa/bookings/my?scope=upcoming"
+          }
+        },
+        {
+          "name": "Cancel SPA booking",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }] },
+            "method": "PATCH",
+            "url": "{{baseUrl}}/mobile/app/spa/bookings/{{spaBookingId}}/cancel"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Personal Training - Dedicated API",
+      "description": "Dedicated personal-training routes. All requests require a customer Bearer token and only accept personal-training services, schedules and bookings.",
+      "item": [
+        {
+          "name": "Get personal-training services",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "const json = pm.response.json();",
+              "if (json.data && json.data[0]) pm.collectionVariables.set('personalTrainingServiceId', json.data[0].id);"
+            ] }
+          }],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/mobile/app/personal-training/services"
+          }
+        },
+        {
+          "name": "Get personal trainers",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "const json = pm.response.json();",
+              "if (json.data && json.data[0]) pm.collectionVariables.set('personalTrainingTrainerId', json.data[0].id);"
+            ] }
+          }],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/mobile/app/personal-training/trainers?serviceId={{personalTrainingServiceId}}"
+          }
+        },
+        {
+          "name": "Get personal-training monthly schedule",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "const json = pm.response.json();",
+              "const firstSlot = json.days && json.days.flatMap(day => day.slots || [])[0];",
+              "if (firstSlot && firstSlot.id) pm.collectionVariables.set('personalTrainingScheduleId', firstSlot.id);"
+            ] }
+          }],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/mobile/app/personal-training/schedule?serviceId={{personalTrainingServiceId}}&trainerId={{personalTrainingTrainerId}}&year={{scheduleYear}}&month={{scheduleMonth}}"
+          }
+        },
+        {
+          "name": "Get personal-training slot details",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/mobile/app/personal-training/slots/{{personalTrainingScheduleId}}"
+          }
+        },
+        {
+          "name": "Create personal-training booking",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "const json = pm.response.json();",
+              "if (json.id) pm.collectionVariables.set('personalTrainingBookingId', json.id);"
+            ] }
+          }],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"scheduleId\": {{personalTrainingScheduleId}}\n}" },
+            "url": "{{baseUrl}}/mobile/app/personal-training/bookings",
+            "description": "Returns confirmed, or wait with SERVICE_FULL_WAITLISTED when capacity is full."
+          }
+        },
+        {
+          "name": "Get my personal-training bookings",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/mobile/app/personal-training/bookings/my?scope=upcoming"
+          }
+        },
+        {
+          "name": "Cancel personal-training booking",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }] },
+            "method": "PATCH",
+            "url": "{{baseUrl}}/mobile/app/personal-training/bookings/{{personalTrainingBookingId}}/cancel"
+          }
+        }
+      ]
+    }
+  ]
+}

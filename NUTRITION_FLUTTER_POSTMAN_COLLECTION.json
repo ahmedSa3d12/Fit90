@@ -1,0 +1,182 @@
+{
+  "info": {
+    "_postman_id": "f2ce1a74-4f98-4e66-a897-b2f1a0bb9020",
+    "name": "FIT90 - Nutrition Mobile API",
+    "description": "Import this collection into Postman. Run Login first; it saves the customer access token automatically. Nutrition booking flow: services -> providers -> schedule -> eligibility -> create booking.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://fit90.metacodecx.com/api",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "phone",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "password",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "serviceId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "trainerId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "availabilitySlotId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "bookingId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "year",
+      "value": "2026",
+      "type": "string"
+    },
+    {
+      "key": "month",
+      "value": "8",
+      "type": "string"
+    },
+    {
+      "key": "date",
+      "value": "2026-08-27",
+      "type": "string"
+    },
+    {
+      "key": "startTime",
+      "value": "15:30",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "1. Login customer (saves token)",
+      "request": {
+        "auth": { "type": "noauth" },
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"phone\": \"{{phone}}\",\n  \"password\": \"{{password}}\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": "{{baseUrl}}/mobile/app/login",
+        "description": "Set phone and password in collection variables, then send this request first."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "  pm.collectionVariables.set('accessToken', pm.response.json().accessToken);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Nutrition services",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/mobile/app/nutrition/services",
+        "description": "Choose one nutrition service and copy its id to serviceId. durationMin is the appointment duration."
+      }
+    },
+    {
+      "name": "3. Nutrition providers",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/mobile/app/nutrition/providers",
+        "description": "Choose a provider and copy its id to trainerId."
+      }
+    },
+    {
+      "name": "4. Monthly schedule and available times",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/mobile/app/nutrition/schedule?serviceId={{serviceId}}&trainerId={{trainerId}}&year={{year}}&month={{month}}",
+        "description": "Use days[].times only for booking. booking_not_started means show the window but disable booking."
+      }
+    },
+    {
+      "name": "5. Eligibility / pay at branch",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/mobile/app/nutrition/eligibility?serviceId={{serviceId}}&date={{date}}",
+        "description": "subscription means a remaining entitlement exists. pay_at_branch means booking is allowed and payment is due on attendance."
+      }
+    },
+    {
+      "name": "6. Create nutrition booking",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"availabilitySlotId\": {{availabilitySlotId}},\n  \"serviceId\": {{serviceId}},\n  \"startTime\": \"{{startTime}}\",\n  \"notes\": \"\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": "{{baseUrl}}/mobile/app/nutrition/bookings",
+        "description": "availabilitySlotId and startTime must come from the schedule response. On 409 reload schedule and ask the customer to choose again."
+      }
+    },
+    {
+      "name": "7. My nutrition bookings",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/mobile/app/nutrition/bookings/my?scope=upcoming",
+        "description": "Shows this customer only. paymentStatus due_at_branch means payment at attendance."
+      }
+    },
+    {
+      "name": "8. Cancel nutrition booking",
+      "request": {
+        "method": "PATCH",
+        "header": [],
+        "url": "{{baseUrl}}/mobile/app/nutrition/bookings/{{bookingId}}/cancel",
+        "description": "Cancellation is allowed only for valid upcoming nutrition bookings."
+      }
+    }
+  ]
+}

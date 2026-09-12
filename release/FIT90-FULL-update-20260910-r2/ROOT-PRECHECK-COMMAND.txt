@@ -1,0 +1,9 @@
+# Run as root BEFORE the cPanel deployment command.
+# It changes ownership only for compiled output, never source, .env, uploads, or database data.
+APP=/home/metacodecx/fit90.metacodecx.com
+
+if [ -d "$APP/dist" ]; then
+  chown -R metacodecx:metacodecx "$APP/dist"
+fi
+
+ls -ld "$APP" "$APP/dist" 2>/dev/null || true

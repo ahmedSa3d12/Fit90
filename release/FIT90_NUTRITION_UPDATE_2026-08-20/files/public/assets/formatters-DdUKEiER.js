@@ -1,0 +1,1 @@
+import{b as t,j as e,aP as c,l as o,s as m}from"./index-Bas_h_qQ.js";function l({value:s,className:a}){const{locale:n}=t();return e.jsx("span",{className:o("nums tabular-nums",a),children:m(s,n)})}function i({value:s,pattern:a,className:n}){const{locale:r}=t();return e.jsx("span",{className:o("nums",n),children:c(s,a,r)})}export{i as D,l as N};

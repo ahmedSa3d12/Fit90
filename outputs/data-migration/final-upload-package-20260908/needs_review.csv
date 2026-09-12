@@ -1,0 +1,511 @@
+﻿entity,source_row,legacy_id,reason
+member,47,22262,"missing required name, phone, or gender"
+member,64,22193,"missing required name, phone, or gender"
+member,68,22153,"missing required name, phone, or gender"
+member,97,21840,"missing required name, phone, or gender"
+member,127,20590,"missing required name, phone, or gender"
+member,131,20576,"missing required name, phone, or gender"
+member,136,20548,"missing required name, phone, or gender"
+member,156,20454,"missing required name, phone, or gender"
+member,157,20453,"missing required name, phone, or gender"
+member,158,20452,"missing required name, phone, or gender"
+member,166,20410,"missing required name, phone, or gender"
+member,183,19369,"missing required name, phone, or gender"
+member,184,19368,"missing required name, phone, or gender"
+member,197,19324,"missing required name, phone, or gender"
+member,226,19159,"missing required name, phone, or gender"
+member,267,18990,"missing required name, phone, or gender"
+member,277,18933,"missing required name, phone, or gender"
+member,293,18850,"missing required name, phone, or gender"
+member,294,18846,"missing required name, phone, or gender"
+member,307,18762,"missing required name, phone, or gender"
+member,403,17873,"missing required name, phone, or gender"
+member,417,17700,"missing required name, phone, or gender"
+member,512,16513,"missing required name, phone, or gender"
+member,514,16496,"missing required name, phone, or gender"
+member,517,16487,"missing required name, phone, or gender"
+member,930,11032,"missing required name, phone, or gender"
+member,934,10985,"missing required name, phone, or gender"
+member,1071,9506,"missing required name, phone, or gender"
+member,1090,9404,"missing required name, phone, or gender"
+member,1165,8750,"missing required name, phone, or gender"
+member,1316,7267,"missing required name, phone, or gender"
+member,1928,2587,"missing required name, phone, or gender"
+member,1938,2535,"missing required name, phone, or gender"
+member,1972,2372,"missing required name, phone, or gender"
+member,1981,2337,"missing required name, phone, or gender"
+member,1983,2328,"missing required name, phone, or gender"
+member,2002,2308,duplicate phone; first valid member retained
+member,2020,2290,duplicate phone; first valid member retained
+member,2022,2288,duplicate phone; first valid member retained
+member,2033,2277,"missing required name, phone, or gender"
+member,2043,2267,"missing required name, phone, or gender"
+member,2044,2266,"missing required name, phone, or gender"
+member,2046,2264,"missing required name, phone, or gender"
+member,2065,2245,"missing required name, phone, or gender"
+member,2083,2227,"missing required name, phone, or gender"
+member,2104,2206,"missing required name, phone, or gender"
+member,2105,2205,"missing required name, phone, or gender"
+member,2129,2181,duplicate phone; first valid member retained
+member,2139,2171,"missing required name, phone, or gender"
+member,2142,2168,"missing required name, phone, or gender"
+member,2143,2167,"missing required name, phone, or gender"
+member,2166,2144,"missing required name, phone, or gender"
+member,2221,2089,"missing required name, phone, or gender"
+member,2243,2067,"missing required name, phone, or gender"
+member,2247,2062,"missing required name, phone, or gender"
+member,2260,2049,"missing required name, phone, or gender"
+member,2262,2047,"missing required name, phone, or gender"
+member,2276,2033,"missing required name, phone, or gender"
+member,2278,2031,"missing required name, phone, or gender"
+member,2290,2019,"missing required name, phone, or gender"
+member,2292,2017,"missing required name, phone, or gender"
+member,2294,2015,"missing required name, phone, or gender"
+member,2312,1996,"missing required name, phone, or gender"
+member,2395,1912,duplicate phone; first valid member retained
+member,2396,1911,"missing required name, phone, or gender"
+member,2397,1910,"missing required name, phone, or gender"
+member,2403,1903,duplicate phone; first valid member retained
+member,2425,1881,"missing required name, phone, or gender"
+member,2459,1847,duplicate phone; first valid member retained
+member,2463,1843,duplicate phone; first valid member retained
+member,2466,1840,"missing required name, phone, or gender"
+member,2484,1822,"missing required name, phone, or gender"
+member,2507,1799,"missing required name, phone, or gender"
+member,2530,1776,"missing required name, phone, or gender"
+member,2535,1771,duplicate phone; first valid member retained
+member,2537,1769,"missing required name, phone, or gender"
+member,2542,1764,duplicate phone; first valid member retained
+member,2558,1748,"missing required name, phone, or gender"
+member,2560,1746,"missing required name, phone, or gender"
+member,2562,1744,duplicate phone; first valid member retained
+member,2570,1735,"missing required name, phone, or gender"
+member,2572,1733,duplicate phone; first valid member retained
+member,2577,1727,"missing required name, phone, or gender"
+member,2588,1716,"missing required name, phone, or gender"
+member,2601,1703,"missing required name, phone, or gender"
+member,2606,1698,"missing required name, phone, or gender"
+member,2617,1687,"missing required name, phone, or gender"
+member,2619,1685,"missing required name, phone, or gender"
+member,2649,1655,duplicate phone; first valid member retained
+member,2658,1646,"missing required name, phone, or gender"
+member,2674,1630,"missing required name, phone, or gender"
+member,2679,1625,duplicate phone; first valid member retained
+member,2682,1622,"missing required name, phone, or gender"
+member,2700,1604,"missing required name, phone, or gender"
+member,2716,1588,"missing required name, phone, or gender"
+member,2726,1578,"missing required name, phone, or gender"
+member,2735,1569,"missing required name, phone, or gender"
+member,2752,1552,"missing required name, phone, or gender"
+member,2753,1551,"missing required name, phone, or gender"
+member,2755,1539,duplicate phone; first valid member retained
+subscription,130,5487,member not accepted
+subscription,131,5486,package not matched locally
+subscription,147,5469,package not matched locally
+subscription,153,5463,paid amount exceeds net value
+subscription,154,5462,package not matched locally
+subscription,171,5445,package not matched locally
+subscription,173,5443,paid amount exceeds net value
+subscription,205,5411,package not matched locally
+subscription,206,5410,member not accepted
+subscription,237,5379,member not accepted
+subscription,241,5375,package not matched locally
+subscription,247,5369,member not accepted
+subscription,290,5326,paid amount exceeds net value
+subscription,317,5297,member not accepted
+subscription,319,5295,paid amount exceeds net value
+subscription,342,5271,paid amount exceeds net value
+subscription,370,5242,member not accepted
+subscription,374,5238,member not accepted
+subscription,379,5233,member not accepted
+subscription,392,5220,paid amount exceeds net value
+subscription,438,5174,member not accepted
+subscription,440,5172,package not matched locally
+subscription,453,5159,package not matched locally
+subscription,455,5157,member not accepted
+subscription,494,5118,paid amount exceeds net value
+subscription,495,5117,paid amount exceeds net value
+subscription,513,5097,package not matched locally
+subscription,522,5088,package not matched locally
+subscription,523,5087,package not matched locally
+subscription,525,5085,member not accepted
+subscription,526,5084,member not accepted
+subscription,561,5048,member not accepted
+subscription,562,5047,member not accepted
+subscription,563,5046,member not accepted
+subscription,568,5041,paid amount exceeds net value
+subscription,608,5001,member not accepted
+subscription,628,4981,package not matched locally
+subscription,629,4980,paid amount exceeds net value
+subscription,641,4968,paid amount exceeds net value
+subscription,698,4911,paid amount exceeds net value
+subscription,702,4907,member not accepted; paid amount exceeds net value
+subscription,722,4887,member not accepted
+subscription,811,4797,member not accepted
+subscription,831,4777,member not accepted
+subscription,855,4753,member not accepted
+subscription,864,4743,package not matched locally
+subscription,905,4701,member not accepted
+subscription,921,4685,paid amount exceeds net value
+subscription,922,4684,paid amount exceeds net value
+subscription,928,4678,member not accepted
+subscription,929,4677,member not accepted
+subscription,969,4637,member not accepted
+subscription,1005,4600,paid amount exceeds net value
+subscription,1121,4483,paid amount exceeds net value
+subscription,1157,4446,paid amount exceeds net value
+subscription,1175,4427,paid amount exceeds net value
+subscription,1184,4418,paid amount exceeds net value
+subscription,1192,4410,paid amount exceeds net value
+subscription,1235,4366,package not matched locally
+subscription,1275,4325,package not matched locally
+subscription,1279,4321,package not matched locally
+subscription,1289,4310,package not matched locally
+subscription,1290,4309,member not accepted
+subscription,1347,4251,paid amount exceeds net value
+subscription,1350,4248,paid amount exceeds net value
+subscription,1358,4239,member not accepted
+subscription,1380,4216,paid amount exceeds net value
+subscription,1398,4196,package not matched locally
+subscription,1410,4184,package not matched locally
+subscription,1412,4182,package not matched locally
+subscription,1543,4048,package not matched locally
+subscription,1546,4045,package not matched locally
+subscription,1656,3933,member not accepted
+subscription,1663,3926,member not accepted
+subscription,1669,3920,member not accepted
+subscription,1683,3905,package not matched locally
+subscription,1721,3867,paid amount exceeds net value
+subscription,1735,3853,package not matched locally
+subscription,1738,3850,paid amount exceeds net value
+subscription,1799,3789,package not matched locally
+subscription,1808,3780,package not matched locally
+subscription,1820,3768,package not matched locally
+subscription,1826,3762,package not matched locally
+subscription,1852,3736,package not matched locally
+subscription,1868,3720,paid amount exceeds net value
+subscription,1896,3691,member not accepted
+subscription,1909,3678,package not matched locally
+subscription,1920,3666,paid amount exceeds net value
+subscription,1955,3631,paid amount exceeds net value
+subscription,1968,3618,paid amount exceeds net value
+subscription,1977,3609,member not accepted
+subscription,1983,3603,paid amount exceeds net value
+subscription,2019,3566,package not matched locally
+subscription,2025,3560,package not matched locally
+subscription,2033,3552,paid amount exceeds net value
+subscription,2134,3449,package not matched locally
+subscription,2135,3448,package not matched locally
+subscription,2220,3363,paid amount exceeds net value
+subscription,2241,3342,paid amount exceeds net value
+subscription,2247,3336,package not matched locally
+subscription,2250,3333,package not matched locally
+subscription,2298,3285,package not matched locally
+subscription,2302,3281,paid amount exceeds net value
+subscription,2348,3235,package not matched locally
+subscription,2386,3197,package not matched locally
+subscription,2393,3190,package not matched locally
+subscription,2447,3136,package not matched locally
+subscription,2489,3094,paid amount exceeds net value
+subscription,2492,3091,paid amount exceeds net value
+subscription,2500,3083,package not matched locally
+subscription,2508,3075,package not matched locally
+subscription,2519,3064,paid amount exceeds net value
+subscription,2579,3004,paid amount exceeds net value
+subscription,2601,2982,package not matched locally
+subscription,2652,2931,package not matched locally
+subscription,2787,2796,paid amount exceeds net value
+subscription,2797,2786,member not accepted
+subscription,2798,2785,member not accepted; paid amount exceeds net value
+subscription,2850,2733,package not matched locally
+subscription,2884,2699,paid amount exceeds net value
+subscription,2885,2698,paid amount exceeds net value
+subscription,2914,2668,package not matched locally
+subscription,2959,2622,package not matched locally
+subscription,2991,2590,package not matched locally
+subscription,3010,2571,package not matched locally
+subscription,3026,2555,paid amount exceeds net value
+subscription,3027,2554,paid amount exceeds net value
+subscription,3028,2553,package not matched locally
+subscription,3062,2517,package not matched locally
+subscription,3093,2486,package not matched locally
+subscription,3101,2478,package not matched locally
+subscription,3112,2467,member not accepted
+subscription,3126,2453,package not matched locally
+subscription,3138,2441,paid amount exceeds net value
+subscription,3140,2439,paid amount exceeds net value
+subscription,3148,2430,paid amount exceeds net value
+subscription,3153,2425,paid amount exceeds net value
+subscription,3154,2424,paid amount exceeds net value
+subscription,3162,2416,package not matched locally
+subscription,3171,2407,member not accepted
+subscription,3245,2333,paid amount exceeds net value
+subscription,3270,2308,paid amount exceeds net value
+subscription,3298,2279,member not accepted
+subscription,3346,2230,package not matched locally
+subscription,3354,2221,missing contract
+subscription,3366,2206,member not accepted
+subscription,3376,2196,paid amount exceeds net value
+subscription,3378,2194,paid amount exceeds net value
+subscription,3430,2141,paid amount exceeds net value
+subscription,3457,2114,package not matched locally
+subscription,3476,2094,paid amount exceeds net value
+subscription,3498,2069,paid amount exceeds net value
+subscription,3524,2041,package not matched locally
+subscription,3525,2040,package not matched locally
+subscription,3546,2019,member not accepted
+subscription,3551,2014,package not matched locally
+subscription,3642,1923,paid amount exceeds net value
+subscription,3700,1864,package not matched locally
+subscription,3708,1855,paid amount exceeds net value
+subscription,3724,1839,paid amount exceeds net value
+subscription,3800,1762,paid amount exceeds net value
+subscription,3832,1729,paid amount exceeds net value
+subscription,3900,1660,paid amount exceeds net value
+subscription,3929,1631,paid amount exceeds net value
+subscription,3931,1629,paid amount exceeds net value
+subscription,3936,1624,missing contract
+subscription,3960,1600,package not matched locally
+subscription,3970,1589,paid amount exceeds net value
+subscription,3974,1585,paid amount exceeds net value
+subscription,4003,1555,paid amount exceeds net value
+subscription,4038,1519,paid amount exceeds net value
+subscription,4069,1488,paid amount exceeds net value
+subscription,4072,1485,package not matched locally
+subscription,4082,1475,paid amount exceeds net value
+subscription,4087,1470,paid amount exceeds net value
+subscription,4089,1468,package not matched locally
+subscription,4099,1457,package not matched locally
+subscription,4100,1456,package not matched locally
+subscription,4104,1452,package not matched locally
+subscription,4110,1446,paid amount exceeds net value
+subscription,4115,1439,paid amount exceeds net value
+subscription,4117,1437,paid amount exceeds net value
+subscription,4128,1426,paid amount exceeds net value
+subscription,4139,1414,paid amount exceeds net value
+subscription,4140,1413,paid amount exceeds net value
+subscription,4141,1412,paid amount exceeds net value
+subscription,4247,1291,member not accepted
+subscription,4260,1278,member not accepted
+subscription,4272,1265,member not accepted
+subscription,4282,1255,paid amount exceeds net value
+subscription,4300,1237,member not accepted
+subscription,4312,1224,member not accepted
+subscription,4320,1215,member not accepted
+subscription,4329,1205,member not accepted
+subscription,4338,1195,member not accepted
+subscription,4345,1188,paid amount exceeds net value
+subscription,4347,1186,package not matched locally
+subscription,4348,1185,package not matched locally
+subscription,4349,1184,package not matched locally
+subscription,4351,1182,package not matched locally
+subscription,4352,1181,member not accepted
+subscription,4361,1172,package not matched locally
+subscription,4362,1171,package not matched locally
+subscription,4385,1148,member not accepted
+subscription,4410,1123,member not accepted
+subscription,4414,1119,member not accepted
+subscription,4415,1118,member not accepted
+subscription,4435,1098,member not accepted
+subscription,4437,1096,member not accepted
+subscription,4438,1095,member not accepted
+subscription,4452,1080,member not accepted; package not matched locally
+subscription,4459,1073,member not accepted
+subscription,4463,1069,package not matched locally
+subscription,4464,1068,package not matched locally
+subscription,4470,1062,member not accepted
+subscription,4492,1040,member not accepted
+subscription,4526,1006,package not matched locally
+subscription,4537,995,package not matched locally
+subscription,4544,988,member not accepted
+subscription,4548,984,package not matched locally
+subscription,4552,980,member not accepted
+subscription,4563,969,member not accepted
+subscription,4566,966,package not matched locally
+subscription,4567,965,package not matched locally
+subscription,4568,964,member not accepted
+subscription,4578,954,package not matched locally
+subscription,4585,947,missing contract
+subscription,4588,944,package not matched locally
+subscription,4613,919,member not accepted
+subscription,4615,917,package not matched locally
+subscription,4625,907,member not accepted
+subscription,4629,903,member not accepted
+subscription,4636,895,package not matched locally
+subscription,4641,890,member not accepted
+subscription,4679,850,member not accepted
+subscription,4680,849,member not accepted
+subscription,4685,843,member not accepted
+subscription,4691,837,member not accepted
+subscription,4696,832,member not accepted
+subscription,4707,821,member not accepted
+subscription,4714,814,member not accepted
+subscription,4721,807,member not accepted
+subscription,4722,806,member not accepted
+subscription,4733,795,member not accepted
+subscription,4734,794,package not matched locally
+subscription,4775,752,member not accepted
+subscription,4776,751,member not accepted
+subscription,4783,744,member not accepted
+subscription,4792,735,member not accepted
+subscription,4793,734,member not accepted
+subscription,4796,731,package not matched locally
+subscription,4805,722,package not matched locally
+subscription,4812,715,member not accepted
+subscription,4814,713,package not matched locally
+subscription,4815,712,package not matched locally
+subscription,4816,711,package not matched locally
+subscription,4817,710,member not accepted
+subscription,4818,709,package not matched locally
+subscription,4819,708,package not matched locally
+subscription,4820,707,package not matched locally
+subscription,4821,706,package not matched locally
+subscription,4822,704,package not matched locally
+subscription,4825,701,member not accepted
+subscription,4827,699,package not matched locally
+subscription,4828,698,package not matched locally
+subscription,4829,697,package not matched locally
+subscription,4830,696,package not matched locally
+subscription,4831,695,package not matched locally
+subscription,4832,694,package not matched locally
+subscription,4833,693,package not matched locally
+subscription,4834,692,package not matched locally
+subscription,4839,687,package not matched locally
+subscription,4842,684,package not matched locally
+subscription,4844,682,package not matched locally
+subscription,4845,681,package not matched locally
+subscription,4846,680,package not matched locally
+subscription,4847,679,package not matched locally
+subscription,4848,678,package not matched locally
+subscription,4853,673,package not matched locally
+subscription,4854,672,package not matched locally
+subscription,4855,671,package not matched locally
+subscription,4862,663,package not matched locally
+subscription,4863,662,package not matched locally
+subscription,4865,660,package not matched locally
+subscription,4868,657,package not matched locally
+subscription,4869,656,package not matched locally
+subscription,4873,652,member not accepted
+subscription,4875,650,package not matched locally
+subscription,4878,647,package not matched locally
+subscription,4879,646,package not matched locally
+subscription,4880,645,package not matched locally
+subscription,4881,644,missing contract
+subscription,4882,643,package not matched locally
+subscription,4884,641,package not matched locally
+subscription,4888,637,package not matched locally
+subscription,4893,632,package not matched locally
+subscription,4894,631,package not matched locally
+subscription,4895,630,package not matched locally
+subscription,4898,627,member not accepted
+subscription,4899,626,member not accepted
+subscription,4900,625,package not matched locally
+subscription,4902,623,member not accepted; package not matched locally
+subscription,4910,615,package not matched locally
+subscription,4913,612,package not matched locally
+subscription,4918,607,package not matched locally
+subscription,4920,605,package not matched locally
+subscription,4921,604,package not matched locally
+subscription,4922,603,package not matched locally
+subscription,4926,599,package not matched locally
+subscription,4929,596,member not accepted
+subscription,4930,595,package not matched locally
+subscription,4931,594,member not accepted
+subscription,4939,586,member not accepted; package not matched locally
+subscription,4941,584,package not matched locally
+subscription,4942,583,member not accepted
+subscription,4946,579,package not matched locally
+subscription,4947,578,package not matched locally
+subscription,4949,576,package not matched locally
+subscription,4950,575,package not matched locally
+subscription,4953,572,package not matched locally
+subscription,4955,570,package not matched locally
+subscription,4957,568,package not matched locally
+subscription,4960,565,member not accepted; package not matched locally
+subscription,4967,558,member not accepted
+subscription,4968,557,package not matched locally
+subscription,4969,556,package not matched locally
+subscription,4970,555,package not matched locally
+subscription,4971,554,package not matched locally
+subscription,4974,551,package not matched locally
+subscription,4975,550,package not matched locally
+subscription,4977,548,member not accepted; package not matched locally
+subscription,4978,546,package not matched locally
+subscription,4980,544,package not matched locally
+subscription,4981,543,package not matched locally
+subscription,4982,542,package not matched locally
+subscription,4984,540,member not accepted; package not matched locally
+subscription,4985,539,package not matched locally
+subscription,4988,536,package not matched locally
+subscription,4989,535,package not matched locally
+subscription,4991,533,member not accepted
+subscription,4992,532,package not matched locally
+subscription,4993,531,package not matched locally
+subscription,4994,530,package not matched locally
+subscription,4995,529,package not matched locally
+subscription,4996,528,package not matched locally
+subscription,4999,525,member not accepted
+subscription,5000,524,member not accepted
+subscription,5001,523,member not accepted
+subscription,5003,521,package not matched locally
+subscription,5005,519,package not matched locally
+subscription,5007,517,member not accepted
+subscription,5008,516,package not matched locally
+subscription,5009,515,package not matched locally
+subscription,5011,513,package not matched locally
+subscription,5012,512,package not matched locally
+subscription,5013,511,member not accepted
+subscription,5022,501,package not matched locally
+subscription,5023,500,package not matched locally
+subscription,5025,498,member not accepted
+subscription,5026,497,package not matched locally
+subscription,5027,496,member not accepted
+subscription,5028,495,package not matched locally
+subscription,5030,493,package not matched locally
+subscription,5031,492,package not matched locally
+subscription,5033,490,package not matched locally
+subscription,5038,485,package not matched locally
+subscription,5039,484,package not matched locally
+subscription,5040,483,member not accepted
+subscription,5043,480,package not matched locally
+subscription,5044,479,package not matched locally
+subscription,5045,478,member not accepted; package not matched locally
+subscription,5048,475,package not matched locally
+subscription,5051,472,member not accepted
+subscription,5053,470,package not matched locally
+subscription,5055,468,package not matched locally
+subscription,5057,466,package not matched locally
+subscription,5058,465,package not matched locally
+subscription,5059,464,package not matched locally
+subscription,5064,459,package not matched locally
+subscription,5067,456,package not matched locally
+subscription,5069,454,package not matched locally
+subscription,5070,453,package not matched locally
+subscription,5072,451,package not matched locally
+subscription,5073,450,package not matched locally
+subscription,5075,448,package not matched locally
+subscription,5079,444,package not matched locally
+subscription,5081,442,package not matched locally
+subscription,5083,440,missing contract
+subscription,5086,437,package not matched locally
+subscription,5087,436,package not matched locally
+subscription,5088,435,package not matched locally
+subscription,5089,434,package not matched locally
+subscription,5091,432,package not matched locally
+subscription,5094,429,member not accepted; package not matched locally
+subscription,5095,428,package not matched locally
+subscription,5096,427,package not matched locally
+subscription,5097,426,package not matched locally
+subscription,5099,424,member not accepted
+subscription,5102,421,member not accepted
+subscription,5106,417,package not matched locally
+subscription,5107,416,package not matched locally
+subscription,5108,415,package not matched locally
+subscription,5109,414,package not matched locally
+subscription,5110,413,package not matched locally
+subscription,5111,412,package not matched locally
+subscription,5112,411,package not matched locally
+subscription,5113,410,package not matched locally
+subscription,5114,409,package not matched locally
+lead,17358,75,missing name
+lead,17371,61,missing name

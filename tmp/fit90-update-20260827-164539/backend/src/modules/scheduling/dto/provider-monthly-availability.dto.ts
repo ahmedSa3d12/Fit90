@@ -1,0 +1,52 @@
+import { Type } from 'class-transformer';
+import { IsBoolean, IsDateString, IsIn, IsInt, IsOptional, IsString, Matches, Max, MaxLength, Min } from 'class-validator';
+
+export class CreateProviderMonthlyAvailabilityDto {
+  @Type(() => Number) @IsInt() @Min(1)
+  employeeId!: number;
+
+  @Type(() => Number) @IsInt() @Min(1) @Max(12)
+  month!: number;
+
+  @Type(() => Number) @IsInt() @Min(2000) @Max(2100)
+  year!: number;
+}
+
+export class ListProviderMonthlyAvailabilityDto {
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1)
+  employeeId?: number;
+
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(12)
+  month?: number;
+
+  @IsOptional() @Type(() => Number) @IsInt() @Min(2000) @Max(2100)
+  year?: number;
+
+  @IsOptional() @IsIn(['draft', 'published', 'archived'])
+  status?: 'draft' | 'published' | 'archived';
+}
+
+export class AddProviderAvailabilityWindowsDto {
+  @Matches(/^\d{4}-\d{2}-\d{2}$/)
+  slotDate!: string;
+
+  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/)
+  startTime!: string;
+
+  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/)
+  endTime!: string;
+
+  @IsOptional() @Type(() => Boolean) @IsBoolean()
+  repeatWeekly?: boolean;
+
+  @IsOptional() @IsDateString()
+  bookingStartAt?: string;
+
+  @IsOptional() @IsDateString()
+  bookingEndAt?: string;
+}
+
+export class CancelProviderAvailabilityWindowDto {
+  @IsString() @MaxLength(500)
+  reason!: string;
+}

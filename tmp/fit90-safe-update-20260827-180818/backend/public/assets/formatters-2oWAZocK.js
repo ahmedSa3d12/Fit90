@@ -1,0 +1,1 @@
+import{u as t,j as e,aR as u,i as o,o as c}from"./index-C5TGklnJ.js";function l({value:a,className:s}){const{locale:n}=t();return e.jsx("span",{className:o("nums tabular-nums",s),children:c(a,n)})}function i({value:a,pattern:s,className:n}){const{locale:r}=t();return e.jsx("span",{className:o("nums",n),children:u(a,s,r)})}export{i as D,l as N};

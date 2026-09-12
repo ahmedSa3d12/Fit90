@@ -1,0 +1,403 @@
+{
+  "title": "FIT90 - SPA and Personal Training API for Flutter",
+  "version": "2026-09-01",
+  "baseUrl": "{API_BASE_URL}",
+  "contentType": "application/json",
+  "authentication": {
+    "required": true,
+    "header": "Authorization",
+    "value": "Bearer {accessToken}"
+  },
+  "shared": {
+    "dateFormat": "YYYY-MM-DD",
+    "timeFormat": "HH:mm",
+    "pagination": {
+      "query": {
+        "page": 1,
+        "pageSize": 50
+      }
+    },
+    "errorResponse": {
+      "statusCode": 400,
+      "message": "Validation or business-rule error",
+      "error": "Bad Request"
+    }
+  },
+  "importantRules": {
+    "spa": [
+      "The client chooses a SPA service, then chooses a free time returned by /availability/provider-times.",
+      "If eligibility.coverageType is subscription, the free SPA balance is reserved. If it is pay_at_branch, booking remains allowed and payment is due at the branch."
+    ],
+    "personalTraining": [
+      "The client must not show a service selector or a time selector.",
+      "The client sends only availabilitySlotId and memberId. The server uses the complete trainer attendance window as the appointment time.",
+      "The client must allow confirmation only when hasPersonalTrainingSubscription is true and coverageType is subscription.",
+      "serviceId and serviceName in the personal-training booking response are internal/audit data only; they must not be selected by the user."
+    ]
+  },
+  "endpoints": {
+    "listSpaServices": {
+      "method": "GET",
+      "path": "/scheduling/services",
+      "queryExample": {
+        "category": "spa",
+        "active": "true",
+        "page": 1,
+        "pageSize": 50
+      },
+      "responseExample": {
+        "data": [
+          {
+            "id": 8,
+            "name": "Massage",
+            "category": "spa",
+            "durationMin": 60,
+            "price": "350.00",
+            "capacity": 1,
+            "isActive": true
+          }
+        ],
+        "meta": {
+          "page": 1,
+          "pageSize": 50,
+          "total": 1,
+          "totalPages": 1
+        }
+      }
+    },
+    "listPublishedProviderMonthlyPlans": {
+      "method": "GET",
+      "path": "/scheduling/provider-monthly-availability",
+      "description": "Use this endpoint to build the monthly SPA or personal-training booking board. A bookable attendance window is an item in windows whose plan status is published.",
+      "queryExamples": {
+        "spa": {
+          "category": "spa",
+          "employeeId": 3,
+          "month": 9,
+          "year": 2026,
+          "status": "published"
+        },
+        "personalTraining": {
+          "category": "personal_training",
+          "employeeId": 3,
+          "month": 9,
+          "year": 2026,
+          "status": "published"
+        }
+      },
+      "responseExample": [
+        {
+          "id": 21,
+          "employeeId": 3,
+          "category": "personal_training",
+          "month": 9,
+          "year": 2026,
+          "status": "published",
+          "trainer": {
+            "id": 3,
+            "name": "زياد راكان المطيري"
+          },
+          "windows": [
+            {
+              "id": 105,
+              "slot_date": "2026-09-10",
+              "start_time": "15:00",
+              "end_time": "16:00",
+              "capacity": 2,
+              "bookingCount": 1,
+              "booking_start_at": null,
+              "booking_end_at": null,
+              "is_active": true,
+              "cancelled_at": null
+            }
+          ]
+        }
+      ],
+      "flutterMapping": {
+        "availabilitySlotId": "windows[].id",
+        "providerId": "employeeId",
+        "remainingSeats": "max(0, windows[].capacity - windows[].bookingCount)"
+      }
+    },
+    "createProviderMonthlyPlan": {
+      "method": "POST",
+      "path": "/scheduling/provider-monthly-availability",
+      "requiredPermission": "club.fitness:create",
+      "bodyExamples": {
+        "spa": {
+          "category": "spa",
+          "employeeId": 3,
+          "month": 9,
+          "year": 2026
+        },
+        "personalTraining": {
+          "category": "personal_training",
+          "employeeId": 3,
+          "month": 9,
+          "year": 2026
+        }
+      }
+    },
+    "addProviderAttendanceWindow": {
+      "method": "POST",
+      "path": "/scheduling/provider-monthly-availability/{planId}/windows",
+      "requiredPermission": "club.fitness:create",
+      "bodyExample": {
+        "slotDate": "2026-09-10",
+        "startTime": "15:00",
+        "endTime": "16:00",
+        "repeatWeekly": false,
+        "bookingStartAt": "2026-09-01T00:00:00.000Z",
+        "bookingEndAt": "2026-09-10T14:00:00.000Z",
+        "capacity": 2
+      },
+      "notes": [
+        "capacity is optional and must be at least 1.",
+        "For personal training, capacity controls how many members may book the same trainer attendance period."
+      ]
+    },
+    "publishProviderMonthlyPlan": {
+      "method": "PATCH",
+      "path": "/scheduling/provider-monthly-availability/{planId}/publish",
+      "requiredPermission": "club.fitness:update",
+      "body": null,
+      "notes": [
+        "A plan must contain at least one attendance window before it can be published."
+      ]
+    },
+    "getSpaProviderTimes": {
+      "method": "GET",
+      "path": "/availability/provider-times",
+      "description": "SPA only: call this after the user has chosen the service and provider. Do not call it for personal training booking.",
+      "queryExample": {
+        "serviceId": 8,
+        "trainerId": 3,
+        "date": "2026-09-10",
+        "category": "spa"
+      },
+      "responseExample": {
+        "service": {
+          "id": 8,
+          "name": "Massage",
+          "durationMin": 60,
+          "price": "350.00",
+          "entitlementKey": null
+        },
+        "trainerId": 3,
+        "date": "2026-09-10",
+        "times": [
+          {
+            "windowId": 105,
+            "availabilitySlotId": 105,
+            "monthlyAvailabilityId": 21,
+            "bookingStartAt": null,
+            "bookingEndAt": null,
+            "startTime": "15:00",
+            "endTime": "16:00"
+          }
+        ]
+      }
+    },
+    "getSpaEligibility": {
+      "method": "GET",
+      "path": "/scheduling/bookings/spa/eligibility",
+      "queryExample": {
+        "memberId": 9,
+        "serviceId": 8,
+        "date": "2026-09-10"
+      },
+      "responseExample": {
+        "total": 2,
+        "used": 0,
+        "reserved": 0,
+        "remaining": 2,
+        "coverageType": "subscription",
+        "paymentStatus": "not_required",
+        "amountDue": "0.00",
+        "sources": [
+          {
+            "subscriptionId": 14,
+            "subscriptionNumber": "SPA-14",
+            "subscriptionName": "Gold"
+          }
+        ]
+      },
+      "noCreditExample": {
+        "total": 0,
+        "used": 0,
+        "reserved": 0,
+        "remaining": 0,
+        "coverageType": "pay_at_branch",
+        "paymentStatus": "due_at_branch",
+        "amountDue": "350.00",
+        "sources": []
+      }
+    },
+    "createSpaBooking": {
+      "method": "POST",
+      "path": "/scheduling/bookings/spa",
+      "requiredPermission": "club.fitness:create",
+      "bodyExample": {
+        "availabilitySlotId": 105,
+        "serviceId": 8,
+        "memberId": 9,
+        "startTime": "15:00",
+        "status": "confirmed",
+        "notes": ""
+      },
+      "responseExample": {
+        "id": 501,
+        "bookingNumber": "BK-AB12CD34",
+        "memberId": 9,
+        "memberName": "Ahmed",
+        "serviceId": 8,
+        "serviceName": "Massage",
+        "employeeId": 3,
+        "bookingDate": "2026-09-10",
+        "startTime": "15:00",
+        "endTime": "16:00",
+        "durationMin": 60,
+        "status": "confirmed",
+        "coverageType": "subscription",
+        "paymentStatus": "not_required",
+        "amountDue": "0.00",
+        "total": 2,
+        "used": 0,
+        "reserved": 1,
+        "remaining": 1
+      }
+    },
+    "getPersonalTrainingEligibility": {
+      "method": "GET",
+      "path": "/scheduling/bookings/personal-training/eligibility",
+      "description": "Call immediately after selecting the member. serviceId is intentionally not accepted.",
+      "queryExample": {
+        "memberId": 9,
+        "date": "2026-09-10"
+      },
+      "responseExample": {
+        "total": 12,
+        "used": 3,
+        "reserved": 1,
+        "remaining": 8,
+        "hasPersonalTrainingSubscription": true,
+        "coverageType": "subscription",
+        "paymentStatus": "not_required",
+        "amountDue": "0.00",
+        "sources": [
+          {
+            "subscriptionId": 26,
+            "subscriptionNumber": "PT-26",
+            "subscriptionName": "Personal Gold",
+            "startDate": "2026-09-01",
+            "endDate": "2026-12-01",
+            "total": 12
+          }
+        ]
+      },
+      "noSubscriptionExample": {
+        "total": 0,
+        "used": 0,
+        "reserved": 0,
+        "remaining": 0,
+        "hasPersonalTrainingSubscription": false,
+        "coverageType": "pay_at_branch",
+        "paymentStatus": "due_at_branch",
+        "amountDue": "500.00",
+        "sources": []
+      },
+      "flutterDecision": {
+        "allowConfirm": "hasPersonalTrainingSubscription == true && coverageType == 'subscription' && remaining > 0",
+        "noSubscriptionMessage": "لا توجد اشتراكات تدريب شخصي متاحة لهذا العضو",
+        "noRemainingCreditMessage": "لا يوجد رصيد متبقٍ في اشتراك التدريب الشخصي"
+      }
+    },
+    "createPersonalTrainingBooking": {
+      "method": "POST",
+      "path": "/scheduling/bookings/personal-training",
+      "requiredPermission": "club.fitness:create",
+      "bodyExample": {
+        "availabilitySlotId": 105,
+        "memberId": 9,
+        "status": "confirmed",
+        "notes": ""
+      },
+      "forbiddenFields": [
+        "serviceId",
+        "startTime"
+      ],
+      "responseExample": {
+        "id": 502,
+        "bookingNumber": "BK-CD34EF56",
+        "memberId": 9,
+        "memberName": "Ahmed",
+        "serviceId": 10,
+        "serviceName": "PT Session",
+        "employeeId": 3,
+        "bookingDate": "2026-09-10",
+        "startTime": "15:00",
+        "endTime": "16:00",
+        "durationMin": 60,
+        "status": "confirmed",
+        "coverageType": "subscription",
+        "paymentStatus": "not_required",
+        "amountDue": "0.00",
+        "total": 12,
+        "used": 3,
+        "reserved": 2,
+        "remaining": 7
+      },
+      "businessErrors": [
+        {
+          "status": 400,
+          "message": "Member does not have an available personal-training subscription."
+        },
+        {
+          "status": 409,
+          "message": "This personal-training attendance is fully booked."
+        }
+      ]
+    },
+    "updateBookingStatus": {
+      "method": "PATCH",
+      "pathTemplates": {
+        "spa": "/scheduling/bookings/spa/{bookingId}/status",
+        "personalTraining": "/scheduling/bookings/personal-training/{bookingId}/status"
+      },
+      "requiredPermission": "club.fitness:update",
+      "bodyExample": {
+        "status": "completed"
+      },
+      "allowedStatuses": [
+        "completed",
+        "cancelled",
+        "no_show"
+      ],
+      "responseExample": {
+        "id": 502,
+        "status": "completed"
+      },
+      "notes": [
+        "Cancelling a subscription-covered SPA or personal-training booking releases the reserved credit."
+      ]
+    },
+    "listBookings": {
+      "method": "GET",
+      "path": "/scheduling/bookings",
+      "queryExamples": {
+        "spa": {
+          "category": "spa",
+          "availabilitySlotId": 105,
+          "dateFrom": "2026-09-01",
+          "dateTo": "2026-09-30"
+        },
+        "personalTraining": {
+          "category": "personal_training",
+          "availabilitySlotId": 105,
+          "dateFrom": "2026-09-01",
+          "dateTo": "2026-09-30"
+        }
+      }
+    }
+  }
+}
